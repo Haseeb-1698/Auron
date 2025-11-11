@@ -1,0 +1,125 @@
+version: '3.8'
+
+services:
+  # DVWA - Damn Vulnerable Web Application
+  dvwa:
+    image: vulnerables/web-dvwa:latest
+    container_name: auron-dvwa
+    ports:
+      - "8080:80"
+    environment:
+      - MYSQL_HOST=dvwa-db
+      - MYSQL_DATABASE=dvwa
+      - MYSQL_USER=dvwa
+      - MYSQL_PASSWORD=dvwa_password
+    depends_on:
+      - dvwa-db
+    networks:
+      - auron-network
+    restart: unless-stopped
+
+  dvwa-db:
+    image: mysql:5.7
+    container_name: auron-dvwa-db
+    environment:
+      - MYSQL_ROOT_PASSWORD=root_password
+      - MYSQL_DATABASE=dvwa
+      - MYSQL_USER=dvwa
+      - MYSQL_PASSWORD=dvwa_password
+    volumes:
+      - dvwa-data:/var/lib/mysql
+    networks:
+      - auron-network
+    restart: unless-stopped
+
+  # OWASP Juice Shop
+  juiceshop:
+    image: bkimminich/juice-shop:latest
+    container_name: auron-juiceshop
+    ports:
+      - "3000:3000"
+    networks:
+      - auron-network
+    restart: unless-stopped
+
+  # Wazuh Manager
+  wazuh:
+    image: wazuh/wazuh-manager:latest
+    container_name: auron-wazuh
+    ports:
+      - "1514:1514"
+      - "1515:1515"
+      - "514:514/udp"
+      - "55000:55000"
+    environment:
+      - INDEXER_URL=https://wazuh-indexer:9200
+      - INDEXER_USERNAME=admin
+      - INDEXER_PASSWORD=SecretPassword
+      - FILEBEAT_SSL_VERIFICATION_MODE=full
+      - SSL_CERTIFICATE_AUTHORITIES=/etc/ssl/root-ca.pem
+      - SSL_CERTIFICATE=/etc/ssl/filebeat.pem
+      - SSL_KEY=/etc/ssl/filebeat.key
+    volumes:
+      - wazuh-data:/var/ossec/data
+      - wazuh-logs:/var/ossec/logs
+    networks:
+      - auron-network
+    restart: unless-stopped
+
+  # Wazuh Dashboard
+  wazuh-dashboard:
+    image: wazuh/wazuh-dashboard:latest
+    container_name: auron-wazuh-dashboard
+    ports:
+      - "5601:5601"
+    environment:
+      - INDEXER_USERNAME=admin
+      - INDEXER_PASSWORD=SecretPassword
+      - WAZUH_API_URL=https://wazuh:55000
+      - API_USERNAME=wazuh-wui
+      - API_PASSWORD=MyS3cr37P450r.*-
+    depends_on:
+      - wazuh
+    networks:
+      - auron-network
+    restart: unless-stopped
+
+  # Metasploitable (Note: Using a community image as official one isn't on Docker Hub)
+  metasploitable:
+    image: tleemcjr/metasploitable2:latest
+    container_name: auron-metasploitable
+    ports:
+      - "8081:80"
+      - "2222:22"
+      - "2121:21"
+      - "3306:3306"
+    networks:
+      - auron-network
+    restart: unless-stopped
+
+  # Backend API
+  backend:
+    build: ./backend
+    container_name: auron-backend
+    ports:
+      - "4000:4000"
+    environment:
+      - NODE_ENV=production
+      - PORT=4000
+      - DATABASE_URL=sqlite:./data/auron.db
+      - JWT_SECRET=your-secret-key-change-this
+    volumes:
+      - backend-data:/app/data
+    networks:
+      - auron-network
+    restart: unless-stopped
+
+networks:
+  auron-network:
+    driver: bridge
+
+volumes:
+  dvwa-data:
+  wazuh-data:
+  wazuh-logs:
+  backend-data:
