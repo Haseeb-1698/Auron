@@ -1,0 +1,73 @@
+import { Sequelize } from 'sequelize-typescript';
+import path from 'path';
+import { logger } from '@utils/logger';
+
+/**
+ * Database Configuration
+ * Configures PostgreSQL connection with Sequelize ORM
+ */
+
+const {
+  DB_HOST = 'localhost',
+  DB_PORT = '5432',
+  DB_NAME = 'auron_db',
+  DB_USER = 'auron_user',
+  DB_PASSWORD = 'auron_secure_password',
+  DB_POOL_MIN = '2',
+  DB_POOL_MAX = '10',
+  NODE_ENV = 'development',
+} = process.env;
+
+export const sequelize = new Sequelize({
+  dialect: 'postgres',
+  host: DB_HOST,
+  port: parseInt(DB_PORT, 10),
+  database: DB_NAME,
+  username: DB_USER,
+  password: DB_PASSWORD,
+  models: [path.join(__dirname, '../models')],
+  logging: NODE_ENV === 'development' ? (msg) => logger.debug(msg) : false,
+  pool: {
+    min: parseInt(DB_POOL_MIN, 10),
+    max: parseInt(DB_POOL_MAX, 10),
+    acquire: 30000,
+    idle: 10000,
+  },
+  define: {
+    timestamps: true,
+    underscored: true,
+  },
+});
+
+/**
+ * Connect to database
+ */
+export async function connectDatabase(): Promise<void> {
+  try {
+    await sequelize.authenticate();
+    logger.info('Database connection established successfully');
+
+    if (NODE_ENV === 'development') {
+      await sequelize.sync({ alter: true });
+      logger.info('Database synchronized');
+    }
+  } catch (error) {
+    logger.error('Unable to connect to database:', error);
+    throw error;
+  }
+}
+
+/**
+ * Close database connection
+ */
+export async function closeDatabaseConnection(): Promise<void> {
+  try {
+    await sequelize.close();
+    logger.info('Database connection closed');
+  } catch (error) {
+    logger.error('Error closing database connection:', error);
+    throw error;
+  }
+}
+
+export default sequelize;
