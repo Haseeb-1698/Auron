@@ -97,6 +97,45 @@ services:
       - auron-network
     restart: unless-stopped
 
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: auron-postgres
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_DB=${DB_NAME:-auron_db}
+      - POSTGRES_USER=${DB_USER:-auron_user}
+      - POSTGRES_PASSWORD=${DB_PASSWORD:-auron_secure_password}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      - auron-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-auron_user}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    container_name: auron-redis
+    ports:
+      - "6379:6379"
+    command: redis-server --appendonly yes
+    volumes:
+      - redis-data:/data
+    networks:
+      - auron-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
   # Backend API
   backend:
     build: ./backend
@@ -104,12 +143,42 @@ services:
     ports:
       - "4000:4000"
     environment:
-      - NODE_ENV=production
+      - NODE_ENV=${NODE_ENV:-production}
       - PORT=4000
-      - DATABASE_URL=sqlite:./data/auron.db
-      - JWT_SECRET=your-secret-key-change-this
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_NAME=${DB_NAME:-auron_db}
+      - DB_USER=${DB_USER:-auron_user}
+      - DB_PASSWORD=${DB_PASSWORD:-auron_secure_password}
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - JWT_SECRET=${JWT_SECRET:-change_this_secret_key_in_production}
+      - CORS_ORIGIN=${CORS_ORIGIN:-http://localhost:5173}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     volumes:
-      - backend-data:/app/data
+      - backend-logs:/app/logs
+      - backend-uploads:/app/uploads
+    networks:
+      - auron-network
+    restart: unless-stopped
+
+  # Frontend Dashboard
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: auron-frontend
+    ports:
+      - "5173:80"
+    environment:
+      - VITE_API_URL=http://localhost:4000/api
+      - VITE_WS_URL=ws://localhost:4000
+    depends_on:
+      - backend
     networks:
       - auron-network
     restart: unless-stopped
@@ -122,4 +191,7 @@ volumes:
   dvwa-data:
   wazuh-data:
   wazuh-logs:
-  backend-data:
+  postgres-data:
+  redis-data:
+  backend-logs:
+  backend-uploads:
