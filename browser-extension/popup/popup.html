@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Auron Security Analyzer</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>🛡️ Auron Security</h1>
+      <p class="subtitle">Real-time Security Analysis</p>
+    </header>
+
+    <div id="status" class="status">
+      <span class="status-indicator"></span>
+      <span id="statusText">Analyzing...</span>
+    </div>
+
+    <div class="tabs">
+      <button class="tab active" data-tab="cookies">Cookies</button>
+      <button class="tab" data-tab="sessions">Sessions</button>
+      <button class="tab" data-tab="csp">CSP</button>
+      <button class="tab" data-tab="phishing">Phishing</button>
+    </div>
+
+    <div id="content">
+      <!-- Cookies Tab -->
+      <div id="cookies-tab" class="tab-content active">
+        <h2>Cookie Analysis</h2>
+        <div id="cookieResults" class="results">
+          <p class="loading">Loading cookie data...</p>
+        </div>
+      </div>
+
+      <!-- Sessions Tab -->
+      <div id="sessions-tab" class="tab-content">
+        <h2>Session Analysis</h2>
+        <div id="sessionResults" class="results">
+          <p class="loading">Loading session data...</p>
+        </div>
+      </div>
+
+      <!-- CSP Tab -->
+      <div id="csp-tab" class="tab-content">
+        <h2>Content Security Policy</h2>
+        <div id="cspResults" class="results">
+          <p class="loading">Loading CSP data...</p>
+        </div>
+      </div>
+
+      <!-- Phishing Tab -->
+      <div id="phishing-tab" class="tab-content">
+        <h2>Phishing Detection</h2>
+        <div id="phishingResults" class="results">
+          <p class="loading">Checking for phishing indicators...</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="actions">
+      <button id="refreshBtn" class="btn btn-primary">Refresh Analysis</button>
+      <button id="exportBtn" class="btn btn-secondary">Export Report</button>
+    </div>
+
+    <footer>
+      <p>Auron Cybersecurity Training Platform</p>
+    </footer>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

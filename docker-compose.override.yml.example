@@ -1,0 +1,49 @@
+# Docker Compose Override Example
+# Copy this file to docker-compose.override.yml and customize as needed
+# This file is automatically loaded by docker-compose if present
+
+version: '3.8'
+
+services:
+  # Example: Change DVWA port
+  # dvwa:
+  #   ports:
+  #     - "8082:80"  # Change from 8080 to 8082
+
+  # Example: Increase backend resources
+  # backend:
+  #   deploy:
+  #     resources:
+  #       limits:
+  #         cpus: '2.0'
+  #         memory: 2G
+  #       reservations:
+  #         memory: 512M
+
+  # Example: Add custom environment variables
+  # backend:
+  #   environment:
+  #     - LOG_LEVEL=debug
+  #     - CUSTOM_VAR=value
+
+  # Example: Mount local code for development
+  # backend:
+  #   volumes:
+  #     - ./backend:/app
+  #     - /app/node_modules  # Preserve node_modules
+  #   command: npm run dev
+
+  # Example: Add additional network
+  # dvwa:
+  #   networks:
+  #     - auron-network
+  #     - monitoring-network
+
+# Example: Add custom networks
+# networks:
+#   monitoring-network:
+#     driver: bridge
+
+# Example: Add custom volumes
+# volumes:
+#   custom-data:
