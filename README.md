@@ -1,14 +1,28 @@
 # 🛡️ Auron - Cybersecurity Training Platform
 
-A comprehensive, unified cybersecurity training platform combining hands-on vulnerable application labs with real-time browser security analysis. Auron enables students and security professionals to learn, test, and defend within a single integrated environment.
+> A production-ready, comprehensive cybersecurity training platform with React dashboard, TypeScript backend, containerized vulnerable applications, and AI-powered learning features.
 
 ## 🎯 Overview
 
-Auron provides:
-- **Docker-based Lab Environment**: Pre-configured vulnerable applications for hands-on practice
-- **Browser Security Extension**: Real-time analysis of cookies, sessions, CSP, and phishing indicators
-- **Backend API**: Progress tracking, reporting, and user management
-- **Comprehensive Learning Path**: From beginner to advanced security concepts
+**Auron** is a unified platform for cybersecurity education combining:
+- 🎓 **Modern React Dashboard**: Full-featured web application with Material-UI
+- 🐳 **Dockerized Lab Environment**: DVWA, Juice Shop, Wazuh, Metasploitable
+- 🔌 **Chrome Security Extension**: Real-time vulnerability analysis
+- 🤖 **AI-Powered Learning**: LiquidMetal AI integration for hints and explanations
+- 🔄 **Real-time Collaboration**: WebSocket-based live sessions
+- 📊 **Progress Tracking**: Gamification with points, badges, and leaderboards
+
+## ✨ What's New in v2.0
+
+- ✅ **Complete TypeScript Migration**: Frontend and backend
+- ✅ **React 18+ Dashboard**: Modern UI with Material-UI components
+- ✅ **Redux Toolkit**: Centralized state management
+- ✅ **PostgreSQL + Redis**: Production-grade database and caching
+- ✅ **Clean Architecture**: Repository pattern, dependency injection
+- ✅ **WebSocket Support**: Real-time updates via Socket.IO
+- ✅ **Docker Multi-stage Builds**: Optimized production containers
+- ✅ **Test Infrastructure**: Vitest, Cypress, Jest configured
+- ✅ **CI/CD Ready**: GitHub Actions configuration included
 
 ## ✨ Features
 
@@ -33,68 +47,110 @@ Auron provides:
 ## 🚀 Quick Start
 
 ### Prerequisites
-- Docker and Docker Compose (20.10+)
-- Node.js 18+ (for backend development)
-- Chrome Browser (for extension)
+- Docker and Docker Compose v2.0+
+- Node.js 18+ and npm 9+
 - 8GB RAM minimum
 - 20GB free disk space
 
-### Installation
+### Installation (All Services via Docker)
 
-1. **Clone the repository**
+1. **Clone and setup environment**
 ```bash
 git clone https://github.com/Haseeb-1698/Auron.git
 cd Auron
+cp .env.example .env
+# Edit .env with your configuration
 ```
 
-2. **Start the lab environment**
+2. **Start all services**
 ```bash
 docker-compose up -d
 ```
 
-3. **Initialize the backend**
+This starts:
+- Frontend Dashboard (port 5173)
+- Backend API (port 4000)
+- PostgreSQL Database (port 5432)
+- Redis Cache (port 6379)
+- DVWA Lab (port 8080)
+- Juice Shop (port 3000)
+- Wazuh Dashboard (port 5601)
+- Metasploitable (port 8081)
+
+3. **Access the dashboard**
+```
+http://localhost:5173
+```
+
+### Development Mode
+
+**Frontend**:
+```bash
+cd frontend
+npm install
+npm run dev    # Starts on http://localhost:5173
+```
+
+**Backend**:
 ```bash
 cd backend
 npm install
-npm start
+npm run dev    # Starts on http://localhost:4000
 ```
-
-4. **Install the browser extension**
-- Open Chrome and navigate to `chrome://extensions/`
-- Enable "Developer mode"
-- Click "Load unpacked"
-- Select the `browser-extension` directory
 
 ### Accessing Services
 
-| Service | URL | Default Credentials |
-|---------|-----|-------------------|
-| DVWA | http://localhost:8080 | admin / password |
-| Juice Shop | http://localhost:3000 | - |
-| Wazuh Dashboard | http://localhost:5601 | admin / SecretPassword |
-| Metasploitable | http://localhost:8081 | - |
-| Backend API | http://localhost:4000 | - |
+| Service | URL | Credentials |
+|---------|-----|-------------|
+| **Frontend Dashboard** | http://localhost:5173 | Register new account |
+| **Backend API** | http://localhost:4000/api | - |
+| **DVWA** | http://localhost:8080 | admin / password |
+| **Juice Shop** | http://localhost:3000 | - |
+| **Wazuh Dashboard** | http://localhost:5601 | admin / SecretPassword |
+| **Metasploitable** | http://localhost:8081 | - |
+| **PostgreSQL** | localhost:5432 | See .env file |
+| **Redis** | localhost:6379 | - |
 
 ## 📚 Project Structure
 
 ```
 Auron/
-├── docker-compose.yml           # Main Docker configuration
-├── backend/                     # Node.js/Express API
-│   ├── server.js               # API server
-│   ├── routes/                 # API endpoints
-│   ├── config/                 # Database configuration
-│   ├── middleware/             # Authentication middleware
-│   └── Dockerfile              # Backend container
-├── browser-extension/          # Chrome extension
-│   ├── manifest.json          # Extension configuration
-│   ├── popup/                 # Extension UI
-│   ├── js/                    # Background and content scripts
-│   └── icons/                 # Extension icons
-├── docker-lab/                 # Lab documentation
-│   └── README.md              # Lab setup guide
-└── docs/                       # Additional documentation
-
+├── frontend/                    # React TypeScript Dashboard
+│   ├── src/
+│   │   ├── components/         # React components
+│   │   ├── features/           # Redux slices (auth, labs, dashboard)
+│   │   ├── pages/              # Route pages
+│   │   ├── services/           # API & WebSocket clients
+│   │   ├── store/              # Redux store
+│   │   └── types/              # TypeScript definitions
+│   ├── Dockerfile              # Multi-stage production build
+│   └── package.json
+│
+├── backend/                    # Node.js TypeScript API
+│   ├── src/
+│   │   ├── controllers/        # Request handlers
+│   │   ├── services/           # Business logic
+│   │   ├── repositories/       # Data access layer
+│   │   ├── models/             # Database models
+│   │   ├── middleware/         # Express middleware
+│   │   ├── routes/             # API routes
+│   │   ├── websocket/          # Socket.IO handlers
+│   │   └── server.ts           # Entry point
+│   ├── tests/                  # Jest tests
+│   ├── Dockerfile              # Multi-stage production build
+│   └── package.json
+│
+├── browser-extension/          # Chrome Extension (Manifest V3)
+│   ├── manifest.json
+│   ├── popup/                  # Extension UI
+│   └── js/                     # Background & content scripts
+│
+├── shared/                     # Shared TypeScript types
+├── deployment/                 # Deployment configs (Vultr, scripts)
+├── .github/workflows/          # CI/CD pipelines
+├── docker-compose.yml          # All services orchestration
+├── IMPLEMENTATION_GUIDE.md     # Detailed implementation docs
+└── package.json                # Root workspace config
 ```
 
 ## 🎓 Learning Paths
@@ -171,14 +227,45 @@ cd browser-extension
 # Reload extension in Chrome (chrome://extensions/)
 ```
 
+### Tech Stack
+
+**Frontend**:
+- React 18+ with TypeScript
+- Material-UI (MUI) components
+- Redux Toolkit for state management
+- React Router for navigation
+- Socket.IO client for WebSocket
+- Axios for HTTP requests
+- Vite for build tooling
+- Vitest + Cypress for testing
+
+**Backend**:
+- Node.js + Express with TypeScript
+- PostgreSQL database (Sequelize ORM)
+- Redis for caching and sessions
+- Socket.IO for real-time features
+- JWT authentication + 2FA (Speakeasy)
+- Dockerode for container management
+- Winston for logging
+- Jest + Supertest for testing
+
+**Infrastructure**:
+- Docker + Docker Compose
+- Multi-stage production builds
+- Nginx for frontend serving
+- PostgreSQL 15 + Redis 7
+- Health checks and auto-restart
+
 ### Database Schema
 
-The backend uses SQLite with the following tables:
-- `users` - User accounts
-- `user_progress` - Learning progress tracking
-- `reports` - Security reports
-- `extension_findings` - Browser extension findings
-- `labs` - Available lab information
+**PostgreSQL** tables:
+- `users` - User accounts with 2FA support
+- `labs` - Lab definitions and configurations
+- `lab_instances` - Running container instances
+- `progress` - User progress per lab/exercise
+- `reports` - Security findings and reports
+- `achievements` - User achievements and badges
+- `collaboration_sessions` - Live collaboration data
 
 ## 📖 Documentation
 
