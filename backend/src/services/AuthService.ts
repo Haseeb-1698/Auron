@@ -170,11 +170,11 @@ export class AuthService {
 
     const accessToken = jwt.sign(payload, this.JWT_SECRET, {
       expiresIn: this.JWT_EXPIRES_IN,
-    });
+    } as jwt.SignOptions);
 
     const refreshToken = jwt.sign(payload, this.JWT_REFRESH_SECRET, {
       expiresIn: this.JWT_REFRESH_EXPIRES_IN,
-    });
+    } as jwt.SignOptions);
 
     return { accessToken, refreshToken };
   }

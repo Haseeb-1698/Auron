@@ -4,6 +4,7 @@ import { Grid, Card, CardContent, Typography, Chip, Button, Box } from '@mui/mat
 import { useAppDispatch, useAppSelector } from '@hooks/redux';
 import { fetchLabs } from '@features/labs/labsSlice';
 import { DIFFICULTY_COLORS } from '@config/constants';
+import type { Lab } from '../../types';
 
 export default function LabsPage(): JSX.Element {
   const dispatch = useAppDispatch();
@@ -24,7 +25,7 @@ export default function LabsPage(): JSX.Element {
         Available Labs
       </Typography>
       <Grid container spacing={3}>
-        {labs.map((lab) => (
+        {labs.map((lab: Lab) => (
           <Grid item xs={12} sm={6} md={4} key={lab.id}>
             <Card>
               <CardContent>
@@ -35,7 +36,7 @@ export default function LabsPage(): JSX.Element {
                   label={lab.difficulty}
                   size="small"
                   sx={{
-                    backgroundColor: DIFFICULTY_COLORS[lab.difficulty],
+                    backgroundColor: DIFFICULTY_COLORS[lab.difficulty as keyof typeof DIFFICULTY_COLORS],
                     color: 'white',
                     mb: 2,
                   }}

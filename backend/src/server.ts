@@ -9,10 +9,10 @@ import dotenv from 'dotenv';
 import { errorHandler } from '@middleware/errorHandler';
 import { logger } from '@utils/logger';
 import { setupRoutes } from '@routes/index';
-import { setupWebSocket } from '@websocket/index';
+import { setupWebSocket } from '@/websocket';
 import { connectDatabase } from '@config/database';
 import { connectRedis } from '@config/redis';
-import JobManager from '@jobs/index';
+import JobManager from '@/jobs';
 
 // Load environment variables
 dotenv.config();
@@ -58,7 +58,7 @@ class App {
 
     // Logging
     if (NODE_ENV === 'development') {
-      this.app.use((req, res, next) => {
+      this.app.use((req, _res, next) => {
         logger.info(`${req.method} ${req.path}`);
         next();
       });

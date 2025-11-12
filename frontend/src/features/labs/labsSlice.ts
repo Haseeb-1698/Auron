@@ -1,9 +1,9 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import api from '@services/api';
 import { API_ENDPOINTS } from '@config/constants';
-import type { Lab, LabInstance } from '@types/index';
+import type { Lab, LabInstance } from '../../types';
 
-interface LabsState {
+export interface LabsState {
   labs: Lab[];
   currentLab: Lab | null;
   currentInstance: LabInstance | null;

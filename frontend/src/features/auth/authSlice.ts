@@ -3,7 +3,7 @@ import { jwtDecode } from 'jwt-decode';
 
 import api from '@services/api';
 import { API_ENDPOINTS, STORAGE_KEYS } from '@config/constants';
-import type { AuthState, User, LoginCredentials, RegisterData } from '@types/index';
+import type { AuthState, User, LoginCredentials, RegisterData } from '../../types';
 
 /**
  * Authentication Slice

@@ -41,6 +41,7 @@ function App(): JSX.Element {
       const cleanup = initializeWebSocket(user.id);
       return cleanup;
     }
+    return undefined;
   }, [isAuthenticated, user]);
 
   if (isLoading) {

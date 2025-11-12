@@ -34,7 +34,7 @@ export class UserProgress extends Model {
     defaultValue: DataType.UUIDV4,
     primaryKey: true,
   })
-  id!: string;
+  declare id: string;
 
   @ForeignKey(() => User)
   @AllowNull(false)
@@ -58,6 +58,17 @@ export class UserProgress extends Model {
   @Default(0)
   @Column(DataType.INTEGER)
   score!: number;
+
+  @Default(0)
+  @Column(DataType.INTEGER)
+  pointsEarned!: number;
+
+  @Default([])
+  @Column(DataType.JSONB)
+  completedExercises!: string[];
+
+  @Column(DataType.DATE)
+  startedAt?: Date;
 
   @Column(DataType.DATE)
   completedAt?: Date;

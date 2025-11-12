@@ -6,7 +6,6 @@ import { Badge } from '@models/Badge';
 import AuthService from '@services/AuthService';
 import { labsSeedData } from './labs-seed';
 import { badgesSeedData } from './badges-seed';
-import { logger } from '@utils/logger';
 
 dotenv.config();
 

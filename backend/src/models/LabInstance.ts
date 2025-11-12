@@ -36,7 +36,7 @@ export class LabInstance extends Model {
     defaultValue: DataType.UUIDV4,
     primaryKey: true,
   })
-  id!: string;
+  declare id: string;
 
   @ForeignKey(() => Lab)
   @AllowNull(false)

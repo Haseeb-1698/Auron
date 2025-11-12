@@ -1,9 +1,9 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import api from '@services/api';
 import { API_ENDPOINTS } from '@config/constants';
-import type { AIHint, VulnerabilityExplanation } from '@types/index';
+import type { AIHint, VulnerabilityExplanation } from '../../types';
 
-interface AIState {
+export interface AIState {
   currentHint: AIHint | null;
   explanation: VulnerabilityExplanation | null;
   isLoading: boolean;

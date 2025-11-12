@@ -1,9 +1,9 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import api from '@services/api';
 import { API_ENDPOINTS } from '@config/constants';
-import type { UserProgress } from '@types/index';
+import type { UserProgress } from '../../types';
 
-interface ProgressState {
+export interface ProgressState {
   progress: UserProgress[];
   isLoading: boolean;
   error: string | null;

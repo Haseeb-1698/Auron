@@ -15,7 +15,7 @@ import {
 } from '@mui/material';
 import { useAppDispatch, useAppSelector } from '@hooks/redux';
 import { login } from '@features/auth/authSlice';
-import type { LoginCredentials } from '@types/index';
+import type { LoginCredentials } from '../../types';
 
 const loginSchema = z.object({
   email: z.string().email('Invalid email address'),

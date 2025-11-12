@@ -8,7 +8,7 @@ import axios, {
 import { toast } from 'react-toastify';
 
 import { API_BASE_URL, STORAGE_KEYS, ERROR_MESSAGES } from '@config/constants';
-import type { ApiResponse } from '@types/index';
+import type { ApiResponse } from '../types';
 
 /**
  * API Service

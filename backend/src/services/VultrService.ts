@@ -373,7 +373,7 @@ docker ps
   /**
    * Cleanup instances older than specified hours
    */
-  async cleanupOldInstances(olderThanHours = 24): Promise<number> {
+  async cleanupOldInstances(_olderThanHours = 24): Promise<number> {
     try {
       const instances = await this.listInstances(['auron']);
       let deletedCount = 0;

@@ -2,6 +2,7 @@ import { Router } from 'express';
 import AdminController from '@controllers/AdminController';
 import { authMiddleware, requireRole } from '@middleware/auth';
 import { validateRequest } from '@middleware/validation';
+import { UserRole } from '@models/User';
 import Joi from 'joi';
 
 const router = Router();
@@ -30,7 +31,7 @@ const resetPasswordSchema = Joi.object({
 
 // All routes require authentication and admin role
 router.use(authMiddleware);
-router.use(requireRole('admin'));
+router.use(requireRole(UserRole.ADMIN));
 
 // User management
 router.get('/users', AdminController.getUsers);

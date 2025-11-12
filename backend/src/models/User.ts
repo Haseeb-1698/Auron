@@ -32,7 +32,7 @@ export class User extends Model {
     defaultValue: DataType.UUIDV4,
     primaryKey: true,
   })
-  id!: string;
+  declare id: string;
 
   @Unique
   @AllowNull(false)
@@ -56,6 +56,13 @@ export class User extends Model {
 
   @Column(DataType.STRING)
   avatar?: string;
+
+  @Column(DataType.TEXT)
+  bio?: string;
+
+  @Default(false)
+  @Column(DataType.BOOLEAN)
+  isVerified!: boolean;
 
   @Default(UserRole.STUDENT)
   @Column(DataType.ENUM(...Object.values(UserRole)))
@@ -81,6 +88,19 @@ export class User extends Model {
 
   @HasMany(() => UserProgress)
   progress!: UserProgress[];
+
+  // Computed properties
+  get fullName(): string {
+    return `${this.firstName || ''} ${this.lastName || ''}`.trim() || this.username;
+  }
+
+  get avatarUrl(): string | undefined {
+    return this.avatar;
+  }
+
+  get password(): string {
+    return this.passwordHash;
+  }
 
   // Instance methods
   toJSON(): Partial<User> {

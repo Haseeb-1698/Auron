@@ -4,7 +4,7 @@ import { UserBadge } from './UserBadge';
 @Table({ tableName: 'badges', timestamps: true, createdAt: 'created_at', updatedAt: 'updated_at' })
 export class Badge extends Model {
   @Column({ type: DataType.UUID, primaryKey: true, defaultValue: DataType.UUIDV4 })
-  id!: string;
+  declare id: string;
 
   @Column(DataType.STRING)
   name!: string;
@@ -40,6 +40,6 @@ export class Badge extends Model {
   userBadges!: UserBadge[];
 
   // Timestamps
-  createdAt!: Date;
-  updatedAt!: Date;
+  declare createdAt: Date;
+  declare updatedAt: Date;
 }

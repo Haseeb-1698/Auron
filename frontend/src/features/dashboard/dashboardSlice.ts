@@ -1,9 +1,9 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import api from '@services/api';
 import { API_ENDPOINTS } from '@config/constants';
-import type { DashboardStats } from '@types/index';
+import type { DashboardStats } from '../../types';
 
-interface DashboardState {
+export interface DashboardState {
   stats: DashboardStats | null;
   isLoading: boolean;
   error: string | null;
