@@ -2,12 +2,22 @@
 
 ## 🎯 Overview
 
-The **Lab Environment Manager** is a production-ready Docker-based container orchestration system that provides:
-- On-demand deployment and destruction of vulnerable application containers
-- User session isolation with resource management
-- State persistence between sessions
+The **Lab Environment Manager** is a production-ready cloud-based lab orchestration system that provides:
+- **On-demand Vultr VM deployment** for isolated lab environments
+- Each lab runs on a **dedicated cloud VM** with Docker pre-installed
+- **Automatic VM creation and destruction** based on user requests
+- User session isolation with complete VM-level isolation
+- State persistence and monitoring across cloud instances
+- **AI-powered learning** via LiquidMetal AI (Claude) and SmartMemory
 - Automatic cleanup and expiration handling
 - Real-time status updates via WebSocket
+
+### Key Advantages of Cloud Architecture
+- **True Isolation**: Each lab gets its own VM (not just container)
+- **Scalability**: No local resource constraints
+- **Security**: VM-level separation prevents cross-contamination
+- **Flexibility**: Deploy labs globally across multiple regions
+- **Cost-Effective**: Pay only for active lab sessions
 
 ## 🏗️ Architecture
 
@@ -15,20 +25,27 @@ The **Lab Environment Manager** is a production-ready Docker-based container orc
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                     Lab Environment Manager                  │
+│              Cloud Lab Environment Manager                   │
 ├─────────────────────────────────────────────────────────────┤
 │                                                               │
 │  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐      │
-│  │  Controller  │→│   Service    │→│  Repository  │      │
+│  │  Controller  │→│CloudLabSvc  │→│  Repository  │      │
 │  │  (HTTP API)  │  │  (Business)  │  │  (Data)      │      │
 │  └──────────────┘  └──────────────┘  └──────────────┘      │
 │         │                  │                   │             │
 │         │                  ↓                   ↓             │
 │         │          ┌──────────────┐    ┌──────────────┐    │
-│         │          │    Docker    │    │  PostgreSQL  │    │
+│         │          │   Vultr API  │    │  PostgreSQL  │    │
 │         │          │   Service    │    │   Database   │    │
 │         │          └──────────────┘    └──────────────┘    │
 │         │                  │                                │
+│         │                  ↓                                │
+│         │          ┌──────────────┐                         │
+│         │          │ LiquidMetal  │                         │
+│         │          │  AI Service  │                         │
+│         │          │   (Claude)   │                         │
+│         │          └──────────────┘                         │
+│         │                                                    │
 │         ↓                  ↓                                │
 │  ┌──────────────┐  ┌──────────────┐                        │
 │  │  WebSocket   │  │    Redis     │                        │
@@ -36,17 +53,41 @@ The **Lab Environment Manager** is a production-ready Docker-based container orc
 │  └──────────────┘  └──────────────┘                        │
 │                                                               │
 └─────────────────────────────────────────────────────────────┘
+                          │
+                          ↓
+        ┌──────────────────────────────────────┐
+        │        Vultr Cloud Infrastructure     │
+        ├──────────────────────────────────────┤
+        │                                       │
+        │  ┌──────────┐  ┌──────────┐         │
+        │  │   VM 1   │  │   VM 2   │  ...    │
+        │  │ (User A) │  │ (User B) │         │
+        │  │  Docker  │  │  Docker  │         │
+        │  └──────────┘  └──────────┘         │
+        │                                       │
+        └──────────────────────────────────────┘
 ```
 
 ### Data Flow
 
 1. **User Request** → Controller validates and authenticates
-2. **Controller** → Service performs business logic checks
+2. **Controller** → CloudLabService performs business logic checks
 3. **Service** → Repository queries/updates database
-4. **Service** → DockerService creates/manages containers
-5. **Service** → Redis caches instance info
-6. **Service** → WebSocket emits status updates
-7. **Response** → User receives instance details
+4. **Service** → VultrService creates cloud VM with Docker
+5. **Service** → VM auto-deploys container via cloud-init script
+6. **Service** → LiquidMetalService tracks learning progress
+7. **Service** → Redis caches instance info
+8. **Service** → WebSocket emits status updates
+9. **Response** → User receives VM IP and access details
+
+### Cloud VM Lifecycle
+
+1. **Creation**: Vultr API creates Ubuntu 22.04 VM with Docker
+2. **Provisioning**: Cloud-init script pulls and runs container
+3. **Running**: User accesses lab via VM's public IP
+4. **Monitoring**: Background jobs sync VM status
+5. **Expiration**: Auto-cleanup destroys VM after timeout
+6. **Deletion**: Complete VM destruction (no residual resources)
 
 ## 📦 Database Schema
 
@@ -80,10 +121,21 @@ CREATE TABLE lab_instances (
   id UUID PRIMARY KEY,
   lab_id UUID NOT NULL REFERENCES labs(id),
   user_id UUID NOT NULL REFERENCES users(id),
-  container_id VARCHAR NOT NULL,
+
+  -- Cloud VM Information
+  cloud_instance_id VARCHAR NOT NULL,        -- Vultr VM ID
+  public_ip VARCHAR,                         -- VM public IP
+  internal_ip VARCHAR,                       -- VM internal IP
+  cloud_provider VARCHAR DEFAULT 'vultr',   -- Provider name
+  cloud_instance_info JSONB,                 -- Region, plan, specs
+
+  -- Container Information (running on VM)
+  container_id VARCHAR,
   container_name VARCHAR,
+
+  -- Instance Status
   status lab_instance_status DEFAULT 'starting',
-  access_url VARCHAR,
+  access_url VARCHAR,                        -- http://public_ip:port
   ports JSONB DEFAULT '[]',
   container_info JSONB,
   started_at TIMESTAMP,
@@ -97,7 +149,7 @@ CREATE TABLE lab_instances (
 
   INDEX idx_lab_instances_user_id (user_id),
   INDEX idx_lab_instances_lab_id (lab_id),
-  INDEX idx_lab_instances_container_id (container_id),
+  INDEX idx_lab_instances_cloud_id (cloud_instance_id),
   INDEX idx_lab_instances_expires_at (expires_at)
 );
 ```
@@ -206,22 +258,31 @@ Response: {
 
 ## 🔧 Core Features
 
-### 1. Container Lifecycle Management
+### 1. Cloud VM Lifecycle Management
 
-**Dockerservice.ts** provides:
+**VultrService.ts** provides:
 
-- **Container Creation**: Pulls images, creates containers with configs
-- **Port Management**: Auto-assigns available ports (10000-60000)
-- **Network Isolation**: All labs run in isolated bridge network
-- **Resource Limits**: Memory and CPU constraints
-- **Health Checks**: Monitors container status
-- **Auto-cleanup**: Removes expired/orphaned containers
+- **VM Creation**: Creates Ubuntu 22.04 instances with Docker pre-installed
+- **Cloud-init Provisioning**: Auto-deploys containers on VM startup
+- **IP Management**: Assigns public and internal IPs
+- **Region Selection**: Deploy globally (US, EU, Asia)
+- **Plan Selection**: Choose VM specs (1GB RAM, 2GB RAM, etc.)
+- **Health Checks**: Monitors VM status via Vultr API
+- **Auto-cleanup**: Destroys VMs on expiration (complete removal)
+
+**CloudLabService.ts** orchestrates:
+
+- **Business Logic**: Quota checks, validation, permissions
+- **VM Provisioning**: Creates VMs via VultrService
+- **AI Integration**: Tracks learning progress via LiquidMetal
+- **Database Management**: Stores instance metadata
+- **Cache Management**: Redis caching for fast lookups
 
 ### 2. Resource Management
 
 **Per-User Limits**:
 ```typescript
-// Default: 5 active instances per user
+// Default: 5 active VMs per user
 MAX_CONTAINERS_PER_USER=5
 
 // Per-lab limit (configurable per lab)
@@ -230,15 +291,25 @@ lab.maxInstancesPerUser = 5
 
 **Global Limits**:
 ```typescript
-MAX_GLOBAL_INSTANCES = 50  // System-wide concurrent containers
+MAX_GLOBAL_INSTANCES = 100  // System-wide concurrent VMs (increased for cloud)
 ```
 
-**Memory/CPU Limits**:
+**VM Plans (Vultr)**:
 ```typescript
-containerConfig: {
-  memoryLimit: "512m",  // 512 MB RAM
-  cpuLimit: "0.5"       // 0.5 CPU cores
-}
+// vc2-1c-1gb: 1 vCPU, 1GB RAM, 25GB SSD - $6/month
+// vc2-2c-4gb: 2 vCPU, 4GB RAM, 80GB SSD - $18/month
+// vc2-4c-8gb: 4 vCPU, 8GB RAM, 160GB SSD - $36/month
+
+VULTR_DEFAULT_PLAN=vc2-1c-1gb  // Basic plan for most labs
+```
+
+**Regions Available**:
+```typescript
+// US: ewr (New Jersey), ord (Chicago), dfw (Dallas),
+//     sea (Seattle), lax (Los Angeles), atl (Atlanta), sjc (Silicon Valley)
+// EU: ams (Amsterdam), lhr (London), fra (Frankfurt)
+
+VULTR_DEFAULT_REGION=ewr  // New Jersey (lowest latency for US East)
 ```
 
 ### 3. Session Persistence
@@ -260,21 +331,42 @@ instance.autoCleanup = true
 
 ### 4. Automatic Cleanup
 
-**Scheduled Cleanup**:
-```typescript
-// Runs on instance expiration
-scheduleAutoCleanup(instanceId, timeout)
+**Background Jobs** (node-cron):
 
-// Manual cleanup job (run via cron)
-await LabService.cleanupExpiredInstances()
+**CleanupJob.ts** - Runs every 5 minutes:
+```typescript
+// Automatic cleanup of expired VMs
+CleanupJob.start();
+
+// Actions performed:
+- Finds expired lab instances
+- Deletes Vultr VMs (complete destruction)
+- Updates database status
+- Clears Redis cache
+- Logs cleanup metrics
 ```
 
-**Cleanup Actions**:
-- Stop running containers
-- Remove containers if `autoCleanup=true`
-- Update database status
-- Clear Redis cache
-- Remove orphaned Docker containers
+**MonitoringJob.ts** - Runs every 10 minutes:
+```typescript
+// Health monitoring and status sync
+MonitoringJob.start();
+
+// Actions performed:
+- Syncs VM status from Vultr API
+- Detects orphaned VMs
+- Checks for expired-but-running instances
+- Stores monitoring metrics in Redis
+- Alerts on anomalies
+```
+
+**Manual Trigger**:
+```typescript
+// Trigger cleanup manually
+await CleanupJob.trigger();
+
+// Trigger monitoring manually
+await MonitoringJob.trigger();
+```
 
 ### 5. Real-time Updates
 
@@ -309,13 +401,27 @@ socket.emit('unsubscribe:lab', labId)
 ### Environment Variables
 
 ```bash
-# Docker Configuration
-DOCKER_HOST=unix:///var/run/docker.sock
-MAX_CONTAINERS_PER_USER=5
+# Vultr Cloud Configuration (Primary Lab Infrastructure)
+VULTR_API_KEY=your_vultr_api_key_here
+VULTR_DEFAULT_REGION=ewr                 # New Jersey
+VULTR_DEFAULT_PLAN=vc2-1c-1gb           # Basic plan ($6/mo)
 
-# Container Defaults
-CONTAINER_TIMEOUT=3600000  # 1 hour
-PUBLIC_HOST=localhost      # For access URLs
+# Available regions: ewr, ord, dfw, sea, lax, atl, ams, lhr, fra, sjc
+# Available plans: vc2-1c-1gb, vc2-2c-4gb, vc2-4c-8gb
+
+# LiquidMetal AI Configuration (Claude Integration & SmartMemory)
+LIQUIDMETAL_API_KEY=your_liquidmetal_api_key_here
+LIQUIDMETAL_ENDPOINT=https://api.liquidmetal.ai/v1
+CLAUDE_MODEL=claude-3-sonnet-20240229
+SMART_MEMORY_ENABLED=true
+
+# Cerebras (Optional - For ML Model Training)
+CEREBRAS_API_KEY=your_cerebras_api_key_here
+CEREBRAS_ENDPOINT=https://api.cerebras.ai/v1
+
+# Resource Limits
+MAX_CONTAINERS_PER_USER=5
+CONTAINER_TIMEOUT=3600000                # 1 hour
 
 # Database
 DB_HOST=localhost
@@ -488,24 +594,48 @@ console.log(`Cleaned up ${cleanedCount} instances`);
 
 ## 🚀 Deployment
 
+### Cloud Architecture Deployment
+
+**No Docker socket required!** The backend only needs:
+- PostgreSQL database
+- Redis cache
+- Vultr API access
+- Environment variables configured
+
 ### Docker Compose
 
 ```yaml
 services:
   backend:
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock  # Docker access
+    # No docker.sock volume needed!
     environment:
-      - DOCKER_HOST=unix:///var/run/docker.sock
+      - VULTR_API_KEY=${VULTR_API_KEY}
+      - VULTR_DEFAULT_REGION=ewr
+      - VULTR_DEFAULT_PLAN=vc2-1c-1gb
+      - LIQUIDMETAL_API_KEY=${LIQUIDMETAL_API_KEY}
 ```
 
-### Kubernetes (Alternative)
+### Vultr VM Setup
 
-```yaml
-# Use Docker-in-Docker or external Docker daemon
-# Mount docker.sock as volume
-# Set appropriate permissions
-```
+1. **Create Vultr Account**: Sign up at vultr.com
+2. **Generate API Key**: Settings → API → Personal Access Token
+3. **Set Environment Variables**: Add to `.env` file
+4. **Deploy Backend**: Can run anywhere (Vultr, AWS, local)
+5. **Configure Regions**: Choose optimal regions for users
+
+### Cost Optimization
+
+**Estimated Costs**:
+- Basic VM (vc2-1c-1gb): $0.009/hour = $6/month
+- 1-hour lab session: $0.01 per user
+- 100 concurrent labs: $60/month (if running 24/7)
+- Actual cost: Much lower (labs run only when needed)
+
+**Best Practices**:
+- Set reasonable timeout durations (1 hour default)
+- Enable auto-cleanup
+- Monitor unused VMs with MonitoringJob
+- Use smallest viable VM plan per lab
 
 ## 📝 Files Created
 
@@ -514,17 +644,22 @@ backend/src/
 ├── models/
 │   ├── User.ts                      # User model with auth
 │   ├── Lab.ts                       # Lab definitions
-│   ├── LabInstance.ts               # Running instances
+│   ├── LabInstance.ts               # Cloud VM instances (updated) ⭐
 │   ├── UserProgress.ts              # Progress tracking
 │   └── index.ts                     # Model exports
 ├── repositories/
 │   ├── LabRepository.ts             # Lab data access
-│   └── LabInstanceRepository.ts      # Instance data access
+│   └── LabInstanceRepository.ts     # Instance data access
 ├── services/
-│   ├── DockerService.ts             # Docker orchestration ⭐
-│   └── LabService.ts                # Business logic ⭐
+│   ├── VultrService.ts              # Vultr cloud VM management ⭐ NEW
+│   ├── LiquidMetalService.ts        # AI integration (Claude) ⭐ NEW
+│   └── CloudLabService.ts           # Cloud lab orchestration ⭐ NEW
+├── jobs/
+│   ├── CleanupJob.ts                # Automated VM cleanup ⭐ NEW
+│   ├── MonitoringJob.ts             # Health monitoring ⭐ NEW
+│   └── index.ts                     # Job manager ⭐ NEW
 ├── controllers/
-│   └── LabController.ts             # HTTP handlers
+│   └── LabController.ts             # HTTP handlers (updated)
 ├── routes/
 │   ├── labs.routes.ts               # Lab endpoints
 │   └── index.ts                     # Route setup
@@ -539,14 +674,18 @@ backend/src/
 │   └── logger.ts                    # Winston logging
 ├── websocket/
 │   └── index.ts                     # Socket.IO setup
-└── server.ts                        # Application entry
+└── server.ts                        # Application entry (updated)
 ```
 
 ## ✅ Status
 
 **Completed Features**:
-- ✅ Full Docker container lifecycle management
-- ✅ User session isolation
+- ✅ **Cloud VM lifecycle management** (Vultr)
+- ✅ **Dedicated VM per lab** (true isolation)
+- ✅ **Auto VM creation/destruction** on user request
+- ✅ **AI integration** (LiquidMetal/Claude) with SmartMemory
+- ✅ **Background jobs** (cleanup, monitoring)
+- ✅ User session isolation (VM-level)
 - ✅ Resource limits and management
 - ✅ State persistence with PostgreSQL
 - ✅ Automatic cleanup and expiration
@@ -556,7 +695,10 @@ backend/src/
 - ✅ Authentication & authorization
 - ✅ Redis caching
 - ✅ Logging infrastructure
+- ✅ Global region deployment support
+- ✅ Cost estimation and tracking
 
+**Architecture**: Cloud-Native (Vultr) ☁️
 **Ready for Production**: Yes ✅
 
 ## 🎓 Usage Examples

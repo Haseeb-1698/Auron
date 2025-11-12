@@ -12,6 +12,7 @@ import { setupRoutes } from '@routes/index';
 import { setupWebSocket } from '@websocket/index';
 import { connectDatabase } from '@config/database';
 import { connectRedis } from '@config/redis';
+import JobManager from '@jobs/index';
 
 // Load environment variables
 dotenv.config();
@@ -86,14 +87,41 @@ class App {
       await connectRedis();
       logger.info('Redis connected successfully');
 
+      // Start background jobs
+      JobManager.startAll();
+      logger.info('Background jobs started successfully');
+
       // Start server
       this.httpServer.listen(PORT, () => {
         logger.info(`Server running on port ${PORT} in ${NODE_ENV} mode`);
       });
+
+      // Graceful shutdown
+      process.on('SIGTERM', this.gracefulShutdown.bind(this));
+      process.on('SIGINT', this.gracefulShutdown.bind(this));
     } catch (error) {
       logger.error('Failed to start server:', error);
       process.exit(1);
     }
+  }
+
+  private gracefulShutdown(): void {
+    logger.info('Received shutdown signal, closing gracefully...');
+
+    // Stop background jobs
+    JobManager.stopAll();
+
+    // Close server
+    this.httpServer.close(() => {
+      logger.info('Server closed');
+      process.exit(0);
+    });
+
+    // Force close after 10 seconds
+    setTimeout(() => {
+      logger.error('Could not close connections in time, forcefully shutting down');
+      process.exit(1);
+    }, 10000);
   }
 }
 
