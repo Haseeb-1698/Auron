@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { Grid, Paper, Typography, Box, Card, CardContent, LinearProgress } from '@mui/material';
+import { Grid, Typography, Box, Card, CardContent, LinearProgress } from '@mui/material';
 import { useAppDispatch, useAppSelector } from '@hooks/redux';
 import { fetchDashboardStats } from '@features/dashboard/dashboardSlice';
 import TrendingUpIcon from '@mui/icons-material/TrendingUp';

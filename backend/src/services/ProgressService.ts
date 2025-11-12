@@ -152,7 +152,8 @@ export class ProgressService {
       const totalPoints = progress.pointsEarned + pointsEarned;
 
       // Determine status
-      let status = progress.status;
+      let status: 'not_started' | 'in_progress' | 'completed' =
+        progress.status as 'not_started' | 'in_progress' | 'completed';
       if (progressPercentage === 100) {
         status = 'completed';
       } else if (progressPercentage > 0) {

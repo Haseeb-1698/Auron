@@ -16,7 +16,7 @@ export function setupRoutes(app: Application): void {
   const apiPrefix = process.env.API_PREFIX || '/api';
 
   // Health check
-  app.get('/health', (req, res) => {
+  app.get('/health', (_req, res) => {
     res.json({
       success: true,
       message: 'Server is running',

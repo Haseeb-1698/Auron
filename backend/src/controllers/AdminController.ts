@@ -266,7 +266,7 @@ export class AdminController {
    * Get system statistics
    * GET /api/admin/stats
    */
-  async getSystemStats(req: AuthRequest, res: Response): Promise<void> {
+  async getSystemStats(_req: AuthRequest, res: Response): Promise<void> {
     try {
       const [
         totalUsers,
@@ -378,7 +378,7 @@ export class AdminController {
    * Manage labs
    * GET /api/admin/labs
    */
-  async getLabs(req: AuthRequest, res: Response): Promise<void> {
+  async getLabs(_req: AuthRequest, res: Response): Promise<void> {
     try {
       const labs = await Lab.findAll({
         order: [['createdAt', 'DESC']],

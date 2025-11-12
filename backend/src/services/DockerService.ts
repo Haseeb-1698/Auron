@@ -35,8 +35,6 @@ export class DockerService {
   private docker: Docker;
   private readonly CONTAINER_PREFIX = 'auron-lab-';
   private readonly NETWORK_NAME = 'auron-labs-network';
-  private readonly MAX_RETRIES = 3;
-  private readonly CLEANUP_TIMEOUT = 10000; // 10 seconds
 
   constructor() {
     const dockerHost = process.env.DOCKER_HOST || '/var/run/docker.sock';

@@ -16,7 +16,8 @@ export function errorHandler(
   error: ApiError,
   req: Request,
   res: Response,
-  next: NextFunction
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  _next: NextFunction
 ): void {
   const status = error.status || error.statusCode || 500;
   const message = error.message || 'Internal server error';

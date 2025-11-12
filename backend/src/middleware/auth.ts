@@ -84,7 +84,7 @@ export function requireRole(...roles: UserRole[]) {
       return;
     }
 
-    if (!roles.includes(req.user.role)) {
+    if (!roles.includes(req.user.role as UserRole)) {
       res.status(403).json({
         success: false,
         message: 'Insufficient permissions',
@@ -101,7 +101,7 @@ export function requireRole(...roles: UserRole[]) {
  */
 export async function optionalAuth(
   req: AuthRequest,
-  res: Response,
+  _res: Response,
   next: NextFunction
 ): Promise<void> {
   const authHeader = req.headers.authorization;
@@ -112,11 +112,11 @@ export async function optionalAuth(
 
   try {
     const token = authHeader.substring(7);
-    const decoded = jwt.verify(token, JWT_SECRET) as { userId: string };
+    const payload = AuthService.verifyAccessToken(token);
 
-    const user = await User.findByPk(decoded.userId);
+    const user = await User.findByPk(payload.userId);
     if (user && user.isActive) {
-      req.user = user;
+      req.user = payload;
       req.userId = user.id;
     }
   } catch (error) {

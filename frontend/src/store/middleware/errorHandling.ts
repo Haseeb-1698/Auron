@@ -1,28 +1,36 @@
 import { Middleware } from '@reduxjs/toolkit';
 import { toast } from 'react-toastify';
-import type { RootState } from '../index';
+
+interface RejectedAction {
+  type: string;
+  error?: {
+    message?: string;
+  };
+  payload?: unknown;
+}
 
 /**
  * Error Handling Middleware
  * Catches rejected actions and displays error notifications
  */
-export const errorHandlingMiddleware: Middleware<object, RootState> =
-  () => (next) => (action) => {
+export const errorHandlingMiddleware: Middleware =
+  () => (next) => (action: unknown) => {
+    const rejectedAction = action as RejectedAction;
     // Check if action is a rejected async thunk
-    if (action.type && action.type.endsWith('/rejected')) {
-      const errorMessage = action.error?.message || 'An unexpected error occurred';
+    if (rejectedAction.type && typeof rejectedAction.type === 'string' && rejectedAction.type.endsWith('/rejected')) {
+      const errorMessage = rejectedAction.error?.message || 'An unexpected error occurred';
 
       // Don't show toast for auth check failures (silent failure)
-      if (!action.type.includes('auth/checkAuth')) {
+      if (!rejectedAction.type.includes('auth/checkAuth')) {
         toast.error(errorMessage);
       }
 
       // Log error in development
       if (process.env.NODE_ENV === 'development') {
         console.error('Action Error:', {
-          type: action.type,
-          error: action.error,
-          payload: action.payload,
+          type: rejectedAction.type,
+          error: rejectedAction.error,
+          payload: rejectedAction.payload,
         });
       }
     }

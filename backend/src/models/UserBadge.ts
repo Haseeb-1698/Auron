@@ -5,7 +5,7 @@ import { Badge } from './Badge';
 @Table({ tableName: 'user_badges', timestamps: true, createdAt: 'created_at', updatedAt: 'updated_at' })
 export class UserBadge extends Model {
   @Column({ type: DataType.UUID, primaryKey: true, defaultValue: DataType.UUIDV4 })
-  id!: string;
+  declare id: string;
 
   @ForeignKey(() => User)
   @Column(DataType.UUID)
@@ -35,6 +35,6 @@ export class UserBadge extends Model {
   badge!: Badge;
 
   // Timestamps
-  createdAt!: Date;
-  updatedAt!: Date;
+  declare createdAt: Date;
+  declare updatedAt: Date;
 }

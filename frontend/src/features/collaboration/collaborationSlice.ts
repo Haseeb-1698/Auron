@@ -1,9 +1,9 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import api from '@services/api';
 import { API_ENDPOINTS } from '@config/constants';
-import type { CollaborationSession } from '@types/index';
+import type { CollaborationSession } from '../../types';
 
-interface CollaborationState {
+export interface CollaborationState {
   sessions: CollaborationSession[];
   currentSession: CollaborationSession | null;
   isLoading: boolean;

@@ -22,17 +22,15 @@ export class AIController {
         currentProgress,
         previousHints,
         userCode,
-        difficulty,
       } = req.body;
 
       const hint = await LiquidMetalService.generateHint({
         userId,
         labId,
         exerciseId,
-        currentProgress,
+        context: userCode || '',
         previousHints,
-        userCode,
-        difficulty,
+        userProgress: currentProgress || 0,
       });
 
       res.status(200).json({
@@ -54,13 +52,9 @@ export class AIController {
    */
   async explainVulnerability(req: AuthRequest, res: Response): Promise<void> {
     try {
-      const { vulnerabilityType, context, detailedExplanation } = req.body;
+      const { vulnerabilityType } = req.body;
 
-      const explanation = await LiquidMetalService.explainVulnerability(
-        vulnerabilityType,
-        context,
-        detailedExplanation
-      );
+      const explanation = await LiquidMetalService.explainVulnerability(vulnerabilityType);
 
       res.status(200).json({
         success: true,
@@ -81,9 +75,9 @@ export class AIController {
    */
   async analyzeCode(req: AuthRequest, res: Response): Promise<void> {
     try {
-      const { code, language, context } = req.body;
+      const { code, language } = req.body;
 
-      const analysis = await LiquidMetalService.analyzeCode(code, language, context);
+      const analysis = await LiquidMetalService.analyzeCode(code, language);
 
       res.status(200).json({
         success: true,
@@ -129,10 +123,10 @@ export class AIController {
    * Get AI conversation history
    * GET /api/ai/history
    */
-  async getHistory(req: AuthRequest, res: Response): Promise<void> {
+  async getHistory(_req: AuthRequest, res: Response): Promise<void> {
     try {
-      const userId = req.user?.userId!;
-      const { labId, limit } = req.query;
+      // const userId = req.user?.userId!;
+      // const { labId, limit } = req.query;
 
       // This would query SmartMemory for conversation history
       // For now, return empty array
@@ -157,7 +151,7 @@ export class AIController {
    */
   async validateSolution(req: AuthRequest, res: Response): Promise<void> {
     try {
-      const userId = req.user?.userId!;
+      // const userId = req.user?.userId!;
       const { labId, exerciseId, solution, expectedOutcome } = req.body;
 
       // Use AI to validate if the solution is correct

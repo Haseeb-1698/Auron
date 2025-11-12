@@ -2,7 +2,7 @@ import { Lab } from '@models/Lab';
 import { LabInstance, LabInstanceStatus } from '@models/LabInstance';
 import LabRepository, { LabFilters } from '@repositories/LabRepository';
 import LabInstanceRepository from '@repositories/LabInstanceRepository';
-import DockerService, { ContainerInfo } from './DockerService';
+import DockerService from './DockerService';
 import { logger } from '@utils/logger';
 import redis from '@config/redis';
 
@@ -189,7 +189,9 @@ export class LabService {
       await instance.update({ status: LabInstanceStatus.STOPPING });
 
       // Stop container
-      await DockerService.stopContainer(instance.containerId);
+      if (instance.containerId) {
+        await DockerService.stopContainer(instance.containerId);
+      }
 
       // Update instance
       await instance.update({
@@ -237,10 +239,16 @@ export class LabService {
       });
 
       // Restart container
+      if (!instance.containerId) {
+        throw new Error('Container ID not found');
+      }
       await DockerService.restartContainer(instance.containerId);
 
       // Extend expiration time
       const lab = instance.lab;
+      if (!lab) {
+        throw new Error('Lab not found');
+      }
       const newExpiresAt = new Date(Date.now() + lab.timeoutDuration);
 
       // Update instance
@@ -280,7 +288,9 @@ export class LabService {
 
     try {
       // Remove old container
-      await DockerService.removeContainer(instance.containerId, true);
+      if (instance.containerId) {
+        await DockerService.removeContainer(instance.containerId, true);
+      }
 
       // Delete old instance
       await LabInstanceRepository.delete(instanceId);
@@ -320,13 +330,15 @@ export class LabService {
     }
 
     // Update container status
-    try {
-      const containerInfo = await DockerService.getContainerInfo(instance.containerId);
-      if (containerInfo.status !== instance.status) {
-        await instance.update({ status: containerInfo.status as LabInstanceStatus });
+    if (instance.containerId) {
+      try {
+        const containerInfo = await DockerService.getContainerInfo(instance.containerId);
+        if (containerInfo && containerInfo.status !== instance.status) {
+          await instance.update({ status: containerInfo.status as LabInstanceStatus });
+        }
+      } catch (error) {
+        logger.warn(`Failed to update container status for instance ${instanceId}:`, error);
       }
-    } catch (error) {
-      logger.warn(`Failed to update container status for instance ${instanceId}:`, error);
     }
 
     return instance;
@@ -341,13 +353,15 @@ export class LabService {
 
     for (const instance of expiredInstances) {
       try {
-        await DockerService.stopContainer(instance.containerId);
+        if (instance.containerId) {
+          await DockerService.stopContainer(instance.containerId);
+        }
         await instance.update({
           status: LabInstanceStatus.EXPIRED,
           stoppedAt: new Date(),
         });
 
-        if (instance.autoCleanup) {
+        if (instance.autoCleanup && instance.containerId) {
           await DockerService.removeContainer(instance.containerId, true);
           await LabInstanceRepository.delete(instance.id);
         }

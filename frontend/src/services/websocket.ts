@@ -2,7 +2,7 @@ import { io, Socket } from 'socket.io-client';
 import { toast } from 'react-toastify';
 
 import { WS_URL, STORAGE_KEYS } from '@config/constants';
-import { WebSocketMessage, WebSocketMessageType } from '@types/index';
+import { WebSocketMessage, WebSocketMessageType } from '../types';
 
 /**
  * WebSocket Service

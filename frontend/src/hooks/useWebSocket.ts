@@ -1,6 +1,6 @@
 import { useEffect, useCallback } from 'react';
 import { getSocket, sendMessage } from '@services/websocket';
-import { WebSocketMessage, WebSocketMessageType } from '@types/index';
+import { WebSocketMessage, WebSocketMessageType } from '../types';
 
 /**
  * Custom Hook for WebSocket Communication

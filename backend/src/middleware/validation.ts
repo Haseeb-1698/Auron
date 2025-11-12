@@ -1,6 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
 import Joi from 'joi';
-import { logger } from '@utils/logger';
 
 /**
  * Validation Middleware
@@ -55,6 +54,13 @@ export function validate(schema: ValidationSchema) {
 
     next();
   };
+}
+
+/**
+ * Simplified validation for single schema
+ */
+export function validateRequest(schema: Joi.ObjectSchema) {
+  return validate({ body: schema });
 }
 
 /**
