@@ -3,6 +3,8 @@ import authRoutes from './auth.routes';
 import labsRoutes from './labs.routes';
 import progressRoutes from './progress.routes';
 import aiRoutes from './ai.routes';
+import adminRoutes from './admin.routes';
+import gamificationRoutes from './gamification.routes';
 import { notFoundHandler } from '@middleware/errorHandler';
 
 /**
@@ -28,6 +30,8 @@ export function setupRoutes(app: Application): void {
   app.use(`${apiPrefix}/labs`, labsRoutes);
   app.use(`${apiPrefix}/progress`, progressRoutes);
   app.use(`${apiPrefix}/ai`, aiRoutes);
+  app.use(`${apiPrefix}/admin`, adminRoutes);
+  app.use(`${apiPrefix}/gamification`, gamificationRoutes);
 
   // 404 handler
   app.use(notFoundHandler);
