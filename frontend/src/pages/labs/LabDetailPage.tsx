@@ -1,14 +1,10 @@
-import { Typography, Container } from '@mui/material';
+import { Container } from '@mui/material';
+import { LabEnvironment } from '@components/labs';
 
 export default function LabDetailPage(): JSX.Element {
   return (
-    <Container>
-      <Typography variant="h4" gutterBottom>
-        Lab Detail Page
-      </Typography>
-      <Typography>
-        Lab details and exercises will be displayed here.
-      </Typography>
+    <Container maxWidth="xl" sx={{ py: 3 }}>
+      <LabEnvironment />
     </Container>
   );
 }
