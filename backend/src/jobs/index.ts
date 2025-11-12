@@ -1,5 +1,7 @@
 import CleanupJob from './CleanupJob';
 import MonitoringJob from './MonitoringJob';
+import ScanJob from './ScanJob';
+import ReportCleanupJob from './ReportCleanupJob';
 import { logger } from '@utils/logger';
 
 /**
@@ -17,6 +19,8 @@ export class JobManager {
     try {
       CleanupJob.start();
       MonitoringJob.start();
+      ScanJob.start();
+      ReportCleanupJob.start();
 
       logger.info('All background jobs started successfully');
     } catch (error) {
@@ -34,6 +38,8 @@ export class JobManager {
     try {
       CleanupJob.stop();
       MonitoringJob.stop();
+      ScanJob.stop();
+      ReportCleanupJob.stop();
 
       logger.info('All background jobs stopped successfully');
     } catch (error) {
@@ -47,13 +53,17 @@ export class JobManager {
   static getStatus(): {
     cleanup: { running: boolean };
     monitoring: { running: boolean };
+    scan: { running: boolean };
+    reportCleanup: { running: boolean };
   } {
     return {
       cleanup: { running: true }, // Will be enhanced with actual status checks
       monitoring: { running: true },
+      scan: { running: true },
+      reportCleanup: { running: true },
     };
   }
 }
 
-export { CleanupJob, MonitoringJob };
+export { CleanupJob, MonitoringJob, ScanJob, ReportCleanupJob };
 export default JobManager;
