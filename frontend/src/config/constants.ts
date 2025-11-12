@@ -53,6 +53,11 @@ export const API_ENDPOINTS = {
     JOIN: (sessionId: string): string => `/collaboration/${sessionId}/join`,
     LEAVE: (sessionId: string): string => `/collaboration/${sessionId}/leave`,
   },
+  GAMIFICATION: {
+    USER_BADGES: '/gamification/user-badges',
+    ALL_BADGES: '/gamification/badges',
+    AWARD_BADGE: (badgeId: string): string => `/gamification/badges/${badgeId}/award`,
+  },
 } as const;
 
 // Local Storage Keys
