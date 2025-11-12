@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
-import jwt from 'jsonwebtoken';
 import { User, UserRole } from '@models/User';
 import { logger } from '@utils/logger';
+import AuthService from '@services/AuthService';
 
 /**
  * Authentication Middleware
@@ -9,16 +9,18 @@ import { logger } from '@utils/logger';
  */
 
 export interface AuthRequest extends Request {
-  user?: User;
+  user?: {
+    userId: string;
+    email: string;
+    role: string;
+  };
   userId?: string;
 }
-
-const JWT_SECRET = process.env.JWT_SECRET || 'your_super_secret_jwt_key_here';
 
 /**
  * Verify JWT token and attach user to request
  */
-export async function authenticate(
+export async function authMiddleware(
   req: AuthRequest,
   res: Response,
   next: NextFunction
@@ -36,9 +38,9 @@ export async function authenticate(
     const token = authHeader.substring(7);
 
     try {
-      const decoded = jwt.verify(token, JWT_SECRET) as { userId: string };
+      const payload = AuthService.verifyAccessToken(token);
 
-      const user = await User.findByPk(decoded.userId);
+      const user = await User.findByPk(payload.userId);
       if (!user || !user.isActive) {
         res.status(401).json({
           success: false,
@@ -47,7 +49,7 @@ export async function authenticate(
         return;
       }
 
-      req.user = user;
+      req.user = payload;
       req.userId = user.id;
       next();
     } catch (error) {
@@ -65,6 +67,9 @@ export async function authenticate(
     });
   }
 }
+
+// Alias for backward compatibility
+export const authenticate = authMiddleware;
 
 /**
  * Require specific role(s)

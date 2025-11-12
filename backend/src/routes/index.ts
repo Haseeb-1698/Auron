@@ -1,4 +1,5 @@
 import { Application } from 'express';
+import authRoutes from './auth.routes';
 import labsRoutes from './labs.routes';
 import { notFoundHandler } from '@middleware/errorHandler';
 
@@ -20,6 +21,7 @@ export function setupRoutes(app: Application): void {
   });
 
   // API routes
+  app.use(`${apiPrefix}/auth`, authRoutes);
   app.use(`${apiPrefix}/labs`, labsRoutes);
 
   // 404 handler
