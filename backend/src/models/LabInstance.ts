@@ -50,10 +50,28 @@ export class LabInstance extends Model {
   @Column(DataType.UUID)
   userId!: string;
 
+  // Cloud VM Instance ID (Vultr)
   @AllowNull(false)
   @Index
   @Column(DataType.STRING)
-  containerId!: string;
+  cloudInstanceId!: string;
+
+  // Public IP address of the VM
+  @Column(DataType.STRING)
+  publicIp?: string;
+
+  // Internal/Private IP
+  @Column(DataType.STRING)
+  internalIp?: string;
+
+  // Cloud provider (vultr, aws, gcp, etc.)
+  @Default('vultr')
+  @Column(DataType.STRING)
+  cloudProvider!: string;
+
+  // Docker container ID on the VM
+  @Column(DataType.STRING)
+  containerId?: string;
 
   @Column(DataType.STRING)
   containerName?: string;
@@ -68,6 +86,10 @@ export class LabInstance extends Model {
   @Default([])
   @Column(DataType.JSONB)
   ports!: Array<{ container: number; host: number }>;
+
+  // Cloud instance info (region, plan, etc.)
+  @Column(DataType.JSONB)
+  cloudInstanceInfo?: Record<string, unknown>;
 
   @Column(DataType.JSONB)
   containerInfo?: Record<string, unknown>;
