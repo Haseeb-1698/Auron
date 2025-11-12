@@ -1,0 +1,145 @@
+import { v4 as uuidv4 } from 'uuid';
+
+/**
+ * Seed data for badges/achievements
+ */
+
+export const badgesSeedData = [
+  // Completion badges
+  {
+    id: uuidv4(),
+    name: 'First Steps',
+    description: 'Complete your first cybersecurity lab',
+    category: 'completion',
+    requirementType: 'labs_completed',
+    requirementValue: 1,
+    pointsReward: 10,
+    rarity: 'common',
+    iconUrl: '/assets/badges/first-steps.png',
+    isActive: true,
+  },
+  {
+    id: uuidv4(),
+    name: 'Lab Enthusiast',
+    description: 'Complete 5 labs to prove your dedication',
+    category: 'completion',
+    requirementType: 'labs_completed',
+    requirementValue: 5,
+    pointsReward: 50,
+    rarity: 'rare',
+    iconUrl: '/assets/badges/enthusiast.png',
+    isActive: true,
+  },
+  {
+    id: uuidv4(),
+    name: 'Lab Master',
+    description: 'Complete all 4 main labs (DVWA, Juice Shop, Metasploitable, Wazuh)',
+    category: 'completion',
+    requirementType: 'labs_completed',
+    requirementValue: 4,
+    pointsReward: 100,
+    rarity: 'epic',
+    iconUrl: '/assets/badges/lab-master.png',
+    isActive: true,
+  },
+
+  // Points badges
+  {
+    id: uuidv4(),
+    name: 'Point Hunter',
+    description: 'Earn your first 500 points',
+    category: 'points',
+    requirementType: 'points_earned',
+    requirementValue: 500,
+    pointsReward: 25,
+    rarity: 'common',
+    iconUrl: '/assets/badges/point-hunter.png',
+    isActive: true,
+  },
+  {
+    id: uuidv4(),
+    name: 'Point Collector',
+    description: 'Accumulate 1000 points',
+    category: 'points',
+    requirementType: 'points_earned',
+    requirementValue: 1000,
+    pointsReward: 50,
+    rarity: 'rare',
+    iconUrl: '/assets/badges/point-collector.png',
+    isActive: true,
+  },
+  {
+    id: uuidv4(),
+    name: 'Point Master',
+    description: 'Reach the impressive milestone of 2000 points',
+    category: 'points',
+    requirementType: 'points_earned',
+    requirementValue: 2000,
+    pointsReward: 100,
+    rarity: 'epic',
+    iconUrl: '/assets/badges/point-master.png',
+    isActive: true,
+  },
+  {
+    id: uuidv4(),
+    name: 'Legend',
+    description: 'Achieve legendary status with 5000 points',
+    category: 'points',
+    requirementType: 'points_earned',
+    requirementValue: 5000,
+    pointsReward: 250,
+    rarity: 'legendary',
+    iconUrl: '/assets/badges/legend.png',
+    isActive: true,
+  },
+
+  // Special badges
+  {
+    id: uuidv4(),
+    name: 'Web Security Expert',
+    description: 'Master web security by completing DVWA',
+    category: 'special',
+    requirementType: 'specific_lab',
+    requirementValue: 1, // Will be mapped to DVWA lab ID
+    pointsReward: 50,
+    rarity: 'rare',
+    iconUrl: '/assets/badges/web-security.png',
+    isActive: true,
+  },
+  {
+    id: uuidv4(),
+    name: 'API Security Specialist',
+    description: 'Complete OWASP Juice Shop',
+    category: 'special',
+    requirementType: 'specific_lab',
+    requirementValue: 2, // Will be mapped to Juice Shop lab ID
+    pointsReward: 75,
+    rarity: 'epic',
+    iconUrl: '/assets/badges/api-security.png',
+    isActive: true,
+  },
+  {
+    id: uuidv4(),
+    name: 'Network Penetrator',
+    description: 'Conquer Metasploitable 2',
+    category: 'special',
+    requirementType: 'specific_lab',
+    requirementValue: 3, // Will be mapped to Metasploitable lab ID
+    pointsReward: 100,
+    rarity: 'epic',
+    iconUrl: '/assets/badges/network-pentester.png',
+    isActive: true,
+  },
+  {
+    id: uuidv4(),
+    name: 'Blue Team Defender',
+    description: 'Master defensive security with Wazuh SIEM',
+    category: 'special',
+    requirementType: 'specific_lab',
+    requirementValue: 4, // Will be mapped to Wazuh lab ID
+    pointsReward: 75,
+    rarity: 'epic',
+    iconUrl: '/assets/badges/blue-team.png',
+    isActive: true,
+  },
+];

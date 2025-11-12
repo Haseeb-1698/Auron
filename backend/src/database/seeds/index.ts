@@ -2,8 +2,10 @@ import { Sequelize } from 'sequelize';
 import dotenv from 'dotenv';
 import { Lab } from '@models/Lab';
 import { User } from '@models/User';
+import { Badge } from '@models/Badge';
 import AuthService from '@services/AuthService';
 import { labsSeedData } from './labs-seed';
+import { badgesSeedData } from './badges-seed';
 import { logger } from '@utils/logger';
 
 dotenv.config();
@@ -35,6 +37,11 @@ async function seedDatabase() {
     console.log('📝 Seeding labs...');
     await seedLabs();
     console.log('✓ Labs seeded\n');
+
+    // Seed badges
+    console.log('📝 Seeding badges...');
+    await seedBadges();
+    console.log('✓ Badges seeded\n');
 
     console.log('✅ Database seeding completed successfully!');
   } catch (error) {
@@ -106,6 +113,19 @@ async function seedLabs() {
       console.log(`  ✓ Created lab: ${labData.name}`);
     } else {
       console.log(`  - Lab already exists: ${labData.name}`);
+    }
+  }
+}
+
+async function seedBadges() {
+  for (const badgeData of badgesSeedData) {
+    const existingBadge = await Badge.findOne({ where: { name: badgeData.name } });
+
+    if (!existingBadge) {
+      await Badge.create(badgeData);
+      console.log(`  ✓ Created badge: ${badgeData.name}`);
+    } else {
+      console.log(`  - Badge already exists: ${badgeData.name}`);
     }
   }
 }
