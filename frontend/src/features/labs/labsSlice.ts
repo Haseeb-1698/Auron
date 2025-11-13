@@ -31,8 +31,8 @@ export const startLab = createAsyncThunk('labs/startLab', async (labId: string) 
   return await api.post<LabInstance>(API_ENDPOINTS.LABS.START(labId));
 });
 
-export const stopLab = createAsyncThunk('labs/stopLab', async (labId: string) => {
-  return await api.post<{ success: boolean }>(API_ENDPOINTS.LABS.STOP(labId));
+export const stopLab = createAsyncThunk('labs/stopLab', async (instanceId: string) => {
+  return await api.post<{ success: boolean }>(API_ENDPOINTS.LABS.STOP_INSTANCE(instanceId));
 });
 
 const labsSlice = createSlice({

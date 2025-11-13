@@ -66,8 +66,9 @@ export class AuthService {
       const user = await User.create({
         username: data.username,
         email: data.email,
-        password: hashedPassword,
-        fullName: data.fullName,
+        passwordHash: hashedPassword,
+        firstName: data.fullName?.split(' ')[0],
+        lastName: data.fullName?.split(' ').slice(1).join(' '),
         role: data.role || 'student',
         isActive: true,
         isVerified: false,
@@ -296,7 +297,7 @@ export class AuthService {
 
     // Hash and update new password
     const hashedPassword = await this.hashPassword(newPassword);
-    await user.update({ password: hashedPassword });
+    await user.update({ passwordHash: hashedPassword });
 
     logger.info(`Password changed for user: ${user.email}`);
     return true;
@@ -312,7 +313,7 @@ export class AuthService {
     }
 
     const hashedPassword = await this.hashPassword(newPassword);
-    await user.update({ password: hashedPassword });
+    await user.update({ passwordHash: hashedPassword });
 
     logger.info(`Password reset for user: ${user.email}`);
     return true;

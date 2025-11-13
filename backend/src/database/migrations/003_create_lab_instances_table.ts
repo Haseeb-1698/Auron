@@ -8,7 +8,8 @@ export const up = async (queryInterface: QueryInterface): Promise<void> => {
       'running',
       'stopping',
       'stopped',
-      'error'
+      'error',
+      'expired'
     );
   `);
 
@@ -73,7 +74,7 @@ export const up = async (queryInterface: QueryInterface): Promise<void> => {
     },
     // Instance Status
     status: {
-      type: DataTypes.ENUM('starting', 'running', 'stopping', 'stopped', 'error'),
+      type: DataTypes.ENUM('starting', 'running', 'stopping', 'stopped', 'error', 'expired'),
       defaultValue: 'starting',
     },
     access_url: {
