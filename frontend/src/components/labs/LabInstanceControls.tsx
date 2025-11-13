@@ -296,7 +296,7 @@ export const LabInstanceControls: React.FC<LabInstanceControlsProps> = ({
         <DialogTitle>Stop Lab Instance?</DialogTitle>
         <DialogContent>
           <DialogContentText>
-            Are you sure you want to stop this lab? Your progress will be saved, but you'll need to
+            Are you sure you want to stop this lab? Your progress will be saved, but you&apos;ll need to
             start the lab again to continue.
           </DialogContentText>
         </DialogContent>
