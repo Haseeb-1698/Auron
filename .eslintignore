@@ -1,0 +1,11 @@
+node_modules
+dist
+build
+coverage
+*.config.js
+*.config.ts
+tests
+**/*.test.ts
+**/*.test.tsx
+**/*.spec.ts
+**/*.spec.tsx
