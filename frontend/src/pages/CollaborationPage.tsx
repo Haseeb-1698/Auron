@@ -207,7 +207,7 @@ export default function CollaborationPage(): JSX.Element {
 
                 {mySessions.length === 0 ? (
                   <Typography color="text.secondary" sx={{ textAlign: 'center', py: 4 }}>
-                    You haven't created any sessions yet
+                    You haven&apos;t created any sessions yet
                   </Typography>
                 ) : (
                   <List>

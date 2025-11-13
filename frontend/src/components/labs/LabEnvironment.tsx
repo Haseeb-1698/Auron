@@ -205,7 +205,7 @@ export const LabEnvironment: React.FC = () => {
                           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, width: '100%' }}>
                             <CheckCircle
                               sx={{
-                                color: false ? 'success.main' : 'grey.300', // TODO: Check completion status
+                                color: 'grey.300', // TODO: Check completion status
                                 fontSize: 20,
                               }}
                             />
@@ -308,7 +308,7 @@ export const LabEnvironment: React.FC = () => {
                 <Typography variant="body2" sx={{ fontFamily: 'monospace' }}>
                   $ Connected to lab environment
                   <br />$ Access URL: {currentInstance.accessUrl}
-                  <br />$ Type 'help' for available commands
+                  <br />$ Type &apos;help&apos; for available commands
                   <br />$
                 </Typography>
               </Box>
