@@ -1,0 +1,250 @@
+version: '3.8'
+
+services:
+  # Backend API
+  backend:
+    image: ${DOCKER_REGISTRY}/auron-backend:${VERSION:-latest}
+    container_name: auron-backend-staging
+    restart: unless-stopped
+    ports:
+      - "4000:4000"
+    environment:
+      - NODE_ENV=staging
+      - PORT=4000
+      - DATABASE_URL=${DATABASE_URL}
+      - REDIS_URL=${REDIS_URL}
+      - JWT_SECRET=${JWT_SECRET}
+      - JWT_REFRESH_SECRET=${JWT_REFRESH_SECRET}
+      - CORS_ORIGIN=${CORS_ORIGIN}
+      - LAB_MODE=${LAB_MODE:-docker}
+      - VULTR_API_KEY=${VULTR_API_KEY}
+      - LIQUIDMETAL_API_KEY=${LIQUIDMETAL_API_KEY}
+    networks:
+      - auron-network-staging
+    depends_on:
+      - postgres
+      - redis
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # Frontend
+  frontend:
+    image: ${DOCKER_REGISTRY}/auron-frontend:${VERSION:-latest}
+    container_name: auron-frontend-staging
+    restart: unless-stopped
+    ports:
+      - "5173:80"
+    environment:
+      - REACT_APP_API_URL=${REACT_APP_API_URL:-http://localhost:4000}
+    networks:
+      - auron-network-staging
+    depends_on:
+      - backend
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:80"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: auron-postgres-staging
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_DB=${POSTGRES_DB:-auron}
+      - POSTGRES_USER=${POSTGRES_USER:-auron}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+    volumes:
+      - postgres-data-staging:/var/lib/postgresql/data
+    networks:
+      - auron-network-staging
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-auron}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    container_name: auron-redis-staging
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD}
+    volumes:
+      - redis-data-staging:/data
+    networks:
+      - auron-network-staging
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # Nginx Reverse Proxy
+  nginx:
+    image: nginx:alpine
+    container_name: auron-nginx-staging
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/staging.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/ssl:/etc/nginx/ssl:ro
+      - nginx-logs-staging:/var/log/nginx
+    networks:
+      - auron-network-staging
+    depends_on:
+      - backend
+      - frontend
+    healthcheck:
+      test: ["CMD", "nginx", "-t"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # Wazuh Manager (Lightweight for staging)
+  wazuh:
+    image: wazuh/wazuh-manager:latest
+    container_name: auron-wazuh-staging
+    restart: unless-stopped
+    ports:
+      - "1514:1514"
+      - "1515:1515"
+      - "55000:55000"
+    environment:
+      - INDEXER_URL=https://wazuh-indexer:9200
+      - INDEXER_USERNAME=admin
+      - INDEXER_PASSWORD=${WAZUH_PASSWORD}
+    volumes:
+      - wazuh-api-staging:/var/ossec/api/configuration
+      - wazuh-etc-staging:/var/ossec/etc
+      - wazuh-logs-staging:/var/ossec/logs
+      - wazuh-queue-staging:/var/ossec/queue
+    networks:
+      - auron-network-staging
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:55000/ || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Wazuh Indexer (OpenSearch)
+  wazuh-indexer:
+    image: wazuh/wazuh-indexer:latest
+    container_name: auron-wazuh-indexer-staging
+    restart: unless-stopped
+    ports:
+      - "9200:9200"
+    environment:
+      - "OPENSEARCH_JAVA_OPTS=-Xms512m -Xmx512m"
+      - discovery.type=single-node
+      - cluster.name=wazuh-cluster-staging
+      - node.name=wazuh-indexer
+      - bootstrap.memory_lock=true
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    volumes:
+      - wazuh-indexer-data-staging:/var/lib/wazuh-indexer
+    networks:
+      - auron-network-staging
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:9200 || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Monitoring - Prometheus (Optional for staging)
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: auron-prometheus-staging
+    restart: unless-stopped
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data-staging:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+    networks:
+      - auron-network-staging
+
+  # Monitoring - Grafana (Optional for staging)
+  grafana:
+    image: grafana/grafana:latest
+    container_name: auron-grafana-staging
+    restart: unless-stopped
+    ports:
+      - "3001:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD}
+      - GF_INSTALL_PLUGINS=grafana-piechart-panel
+    volumes:
+      - grafana-data-staging:/var/lib/grafana
+    networks:
+      - auron-network-staging
+    depends_on:
+      - prometheus
+
+networks:
+  auron-network-staging:
+    driver: bridge
+
+volumes:
+  postgres-data-staging:
+    driver: local
+  redis-data-staging:
+    driver: local
+  wazuh-api-staging:
+    driver: local
+  wazuh-etc-staging:
+    driver: local
+  wazuh-logs-staging:
+    driver: local
+  wazuh-queue-staging:
+    driver: local
+  wazuh-indexer-data-staging:
+    driver: local
+  prometheus-data-staging:
+    driver: local
+  grafana-data-staging:
+    driver: local
+  nginx-logs-staging:
+    driver: local

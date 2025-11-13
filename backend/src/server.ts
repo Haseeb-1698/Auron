@@ -5,6 +5,7 @@ import compression from 'compression';
 import { createServer, Server as HTTPServer } from 'http';
 import { Server as SocketIOServer } from 'socket.io';
 import dotenv from 'dotenv';
+import swaggerUi from 'swagger-ui-express';
 
 import { errorHandler } from '@middleware/errorHandler';
 import { logger } from '@utils/logger';
@@ -14,6 +15,7 @@ import { connectDatabase } from '@config/database';
 import { connectRedis } from '@config/redis';
 import JobManager from '@/jobs';
 import { ReportService } from '@services/ReportService';
+import { swaggerSpec } from '@config/swagger';
 
 // Load environment variables
 dotenv.config();
@@ -67,7 +69,20 @@ class App {
   }
 
   private initializeRoutes(): void {
+    // API Documentation
+    this.app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
+      explorer: true,
+      customCss: '.swagger-ui .topbar { display: none }',
+      customSiteTitle: 'Auron API Documentation',
+    }));
+
+    // API Routes
     setupRoutes(this.app);
+
+    // Health check endpoint
+    this.app.get('/health', (_, res) => {
+      res.json({ status: 'healthy', timestamp: new Date().toISOString() });
+    });
   }
 
   private initializeErrorHandling(): void {
