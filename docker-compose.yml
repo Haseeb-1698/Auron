@@ -42,6 +42,36 @@ services:
       - auron-network
     restart: unless-stopped
 
+  # Wazuh Indexer (OpenSearch-based)
+  wazuh-indexer:
+    image: wazuh/wazuh-indexer:latest
+    container_name: auron-wazuh-indexer
+    ports:
+      - "9200:9200"
+    environment:
+      - "OPENSEARCH_JAVA_OPTS=-Xms512m -Xmx512m"
+      - discovery.type=single-node
+      - cluster.name=wazuh-cluster
+      - node.name=wazuh-indexer
+      - bootstrap.memory_lock=true
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+      nofile:
+        soft: 65536
+        hard: 65536
+    volumes:
+      - wazuh-indexer-data:/var/lib/wazuh-indexer
+    networks:
+      - auron-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:9200 || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
   # Wazuh Manager
   wazuh:
     image: wazuh/wazuh-manager:latest
@@ -55,13 +85,13 @@ services:
       - INDEXER_URL=https://wazuh-indexer:9200
       - INDEXER_USERNAME=admin
       - INDEXER_PASSWORD=SecretPassword
-      - FILEBEAT_SSL_VERIFICATION_MODE=full
-      - SSL_CERTIFICATE_AUTHORITIES=/etc/ssl/root-ca.pem
-      - SSL_CERTIFICATE=/etc/ssl/filebeat.pem
-      - SSL_KEY=/etc/ssl/filebeat.key
+      - FILEBEAT_SSL_VERIFICATION_MODE=none
     volumes:
       - wazuh-data:/var/ossec/data
       - wazuh-logs:/var/ossec/logs
+    depends_on:
+      wazuh-indexer:
+        condition: service_healthy
     networks:
       - auron-network
     restart: unless-stopped
@@ -78,8 +108,12 @@ services:
       - WAZUH_API_URL=https://wazuh:55000
       - API_USERNAME=wazuh-wui
       - API_PASSWORD=MyS3cr37P450r.*-
+      - OPENSEARCH_HOSTS=https://wazuh-indexer:9200
     depends_on:
-      - wazuh
+      wazuh-indexer:
+        condition: service_healthy
+      wazuh:
+        condition: service_started
     networks:
       - auron-network
     restart: unless-stopped
@@ -96,6 +130,25 @@ services:
     networks:
       - auron-network
     restart: unless-stopped
+
+  # Attack Scripts Container (Kali Linux with prebuilt scripts)
+  attack-scripts:
+    image: kalilinux/kali-rolling:latest
+    container_name: auron-attack-scripts
+    command: tail -f /dev/null
+    environment:
+      - DEBIAN_FRONTEND=noninteractive
+    volumes:
+      - ./attack-scripts:/scripts:ro
+    depends_on:
+      - dvwa
+      - juiceshop
+      - metasploitable
+    networks:
+      - auron-network
+    restart: unless-stopped
+    tty: true
+    stdin_open: true
 
   # PostgreSQL Database
   postgres:
@@ -190,6 +243,7 @@ networks:
 
 volumes:
   dvwa-data:
+  wazuh-indexer-data:
   wazuh-data:
   wazuh-logs:
   postgres-data:
