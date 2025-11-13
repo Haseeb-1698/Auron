@@ -14,7 +14,7 @@ import LoadingScreen from '@components/common/LoadingScreen';
 import LoginPage from '@pages/auth/LoginPage';
 import RegisterPage from '@pages/auth/RegisterPage';
 import DashboardPage from '@pages/DashboardPage';
-import LabsPage from '@pages/labs/LabsPage';
+import LabsPage from '@pages/LabsPage';
 import LabDetailPage from '@pages/labs/LabDetailPage';
 import ProgressPage from '@pages/ProgressPage';
 import ReportsPage from '@pages/ReportsPage';
