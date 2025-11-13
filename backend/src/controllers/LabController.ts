@@ -1,15 +1,23 @@
 import { Response } from 'express';
 import { AuthRequest } from '@middleware/auth';
 import CloudLabService from '@services/CloudLabService';
+import LabService from '@services/LabService';
 import { logger } from '@utils/logger';
 
 /**
  * Lab Controller
- * Handles HTTP requests for cloud-based lab management
- * Uses Vultr VMs for isolated lab environments
+ * Handles HTTP requests for lab management
+ * Supports:
+ *  - cloud mode (Vultr VMs) via CloudLabService
+ *  - docker mode (local containers) via LabService
  */
 
 export class LabController {
+  private getLabService() {
+    const labMode = (process.env.LAB_MODE || 'docker').toLowerCase();
+    return labMode === 'cloud' ? CloudLabService : LabService;
+  }
+
   /**
    * Get all labs
    * GET /api/labs
@@ -18,8 +26,9 @@ export class LabController {
     try {
       const { category, difficulty, search } = req.query;
       const userId = req.userId;
+      const Service = this.getLabService();
 
-      const labs = await CloudLabService.getAllLabs(
+      const labs = await Service.getAllLabs(
         {
           category: category as any,
           difficulty: difficulty as any,
@@ -50,8 +59,9 @@ export class LabController {
     try {
       const { id } = req.params;
       const userId = req.userId;
+      const Service = this.getLabService();
 
-      const lab = await CloudLabService.getLabById(id, userId);
+      const lab = await Service.getLabById(id, userId);
       if (!lab) {
         res.status(404).json({
           success: false,
@@ -82,8 +92,9 @@ export class LabController {
       const { id } = req.params;
       const userId = req.userId!;
       const { timeoutOverride } = req.body;
+      const Service = this.getLabService();
 
-      const instance = await CloudLabService.startLab({
+      const instance = await Service.startLab({
         userId,
         labId: id,
         timeoutOverride,
@@ -111,8 +122,9 @@ export class LabController {
     try {
       const { instanceId } = req.params;
       const userId = req.userId!;
+      const Service = this.getLabService();
 
-      const instance = await CloudLabService.stopLab(instanceId, userId);
+      const instance = await Service.stopLab(instanceId, userId);
 
       res.json({
         success: true,
@@ -136,8 +148,9 @@ export class LabController {
     try {
       const { instanceId } = req.params;
       const userId = req.userId!;
+      const Service = this.getLabService();
 
-      const instance = await CloudLabService.restartLab(instanceId, userId);
+      const instance = await Service.restartLab(instanceId, userId);
 
       res.json({
         success: true,
@@ -161,8 +174,9 @@ export class LabController {
     try {
       const { instanceId } = req.params;
       const userId = req.userId!;
+      const Service = this.getLabService();
 
-      const instance = await CloudLabService.resetLab(instanceId, userId);
+      const instance = await Service.resetLab(instanceId, userId);
 
       res.json({
         success: true,
@@ -185,8 +199,9 @@ export class LabController {
   async getUserInstances(req: AuthRequest, res: Response): Promise<void> {
     try {
       const userId = req.userId!;
+      const Service = this.getLabService();
 
-      const instances = await CloudLabService.getUserInstances(userId);
+      const instances = await Service.getUserInstances(userId);
 
       res.json({
         success: true,
@@ -209,8 +224,9 @@ export class LabController {
     try {
       const { instanceId } = req.params;
       const userId = req.userId!;
+      const Service = this.getLabService();
 
-      const instance = await CloudLabService.getInstanceDetails(instanceId, userId);
+      const instance = await Service.getInstanceDetails(instanceId, userId);
 
       res.json({
         success: true,
