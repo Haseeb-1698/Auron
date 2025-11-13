@@ -34,6 +34,10 @@ export const fetchLeaderboard = createAsyncThunk('progress/fetchLeaderboard', as
   return await api.get(API_ENDPOINTS.PROGRESS.LEADERBOARD);
 });
 
+export const fetchUserStats = createAsyncThunk('progress/fetchUserStats', async () => {
+  return await api.get(API_ENDPOINTS.PROGRESS.STATS);
+});
+
 const progressSlice = createSlice({
   name: 'progress',
   initialState,
@@ -50,6 +54,21 @@ const progressSlice = createSlice({
       .addCase(fetchUserProgress.rejected, (state, action) => {
         state.isLoading = false;
         state.error = action.error.message || 'Failed to fetch progress';
+      })
+      .addCase(fetchUserStats.fulfilled, (state, action) => {
+        state.stats = action.payload;
+      })
+      .addCase(fetchUserBadges.fulfilled, (state, action) => {
+        state.badges = action.payload as unknown as unknown[];
+      })
+      .addCase(fetchUserBadges.rejected, (state) => {
+        state.badges = null;
+      })
+      .addCase(fetchLeaderboard.fulfilled, (state, action) => {
+        state.leaderboard = action.payload as unknown as unknown[];
+      })
+      .addCase(fetchLeaderboard.rejected, (state) => {
+        state.leaderboard = null;
       });
   },
 });

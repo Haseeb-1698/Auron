@@ -6,6 +6,7 @@ import labsReducer from '@features/labs/labsSlice';
 import progressReducer from '@features/progress/progressSlice';
 import collaborationReducer from '@features/collaboration/collaborationSlice';
 import aiReducer from '@features/ai/aiSlice';
+import reportsReducer from '@features/reports/reportsSlice';
 
 import { loggingMiddleware } from './middleware/logging';
 import { errorHandlingMiddleware } from './middleware/errorHandling';
@@ -22,6 +23,7 @@ export const store = configureStore({
     progress: progressReducer,
     collaboration: collaborationReducer,
     ai: aiReducer,
+    reports: reportsReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
