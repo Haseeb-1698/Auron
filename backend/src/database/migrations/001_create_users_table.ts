@@ -17,26 +17,30 @@ export const up = async (queryInterface: QueryInterface): Promise<void> => {
       unique: true,
       allowNull: false,
     },
-    password: {
+    password_hash: {
       type: DataTypes.STRING,
       allowNull: false,
     },
-    full_name: {
+    first_name: {
       type: DataTypes.STRING,
       allowNull: true,
     },
-    role: {
-      type: DataTypes.ENUM('student', 'instructor', 'admin'),
-      defaultValue: 'student',
-      allowNull: false,
+    last_name: {
+      type: DataTypes.STRING,
+      allowNull: true,
     },
-    avatar_url: {
+    avatar: {
       type: DataTypes.STRING,
       allowNull: true,
     },
     bio: {
       type: DataTypes.TEXT,
       allowNull: true,
+    },
+    role: {
+      type: DataTypes.ENUM('student', 'instructor', 'admin'),
+      defaultValue: 'student',
+      allowNull: false,
     },
     is_active: {
       type: DataTypes.BOOLEAN,

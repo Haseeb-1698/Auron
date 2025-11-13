@@ -162,6 +162,7 @@ services:
     volumes:
       - backend-logs:/app/logs
       - backend-uploads:/app/uploads
+      - backend-storage:/app/storage
     networks:
       - auron-network
     restart: unless-stopped
@@ -195,3 +196,4 @@ volumes:
   redis-data:
   backend-logs:
   backend-uploads:
+  backend-storage:
