@@ -13,6 +13,7 @@ import { setupWebSocket } from '@/websocket';
 import { connectDatabase } from '@config/database';
 import { connectRedis } from '@config/redis';
 import JobManager from '@/jobs';
+import { ReportService } from '@services/ReportService';
 
 // Load environment variables
 dotenv.config();
@@ -86,6 +87,10 @@ class App {
       // Connect to Redis
       await connectRedis();
       logger.info('Redis connected successfully');
+
+      // Initialize report storage directory
+      await ReportService.initialize();
+      logger.info('Report storage initialized successfully');
 
       // Start background jobs
       JobManager.startAll();
