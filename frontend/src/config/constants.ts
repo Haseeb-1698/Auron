@@ -15,6 +15,7 @@ export const API_ENDPOINTS = {
     LOGOUT: '/auth/logout',
     REFRESH: '/auth/refresh-token',
     ME: '/auth/profile',
+    UPDATE_PROFILE: '/auth/profile',
     CHANGE_PASSWORD: '/auth/change-password',
     ENABLE_2FA: '/auth/2fa/enable',
     VERIFY_2FA: '/auth/2fa/verify',

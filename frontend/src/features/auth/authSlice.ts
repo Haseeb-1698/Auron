@@ -113,6 +113,30 @@ export const verify2FA = createAsyncThunk('auth/verify2FA', async (code: string)
   return response;
 });
 
+export const disable2FA = createAsyncThunk('auth/disable2FA', async () => {
+  const response = await api.post<{ success: boolean }>(API_ENDPOINTS.AUTH.DISABLE_2FA);
+  return response;
+});
+
+export const updateProfile = createAsyncThunk(
+  'auth/updateProfile',
+  async (profileData: Partial<User>) => {
+    const response = await api.put<User>(API_ENDPOINTS.AUTH.UPDATE_PROFILE, profileData);
+    return response;
+  }
+);
+
+export const changePassword = createAsyncThunk(
+  'auth/changePassword',
+  async (passwordData: { currentPassword: string; newPassword: string }) => {
+    const response = await api.post<{ success: boolean }>(
+      API_ENDPOINTS.AUTH.CHANGE_PASSWORD,
+      passwordData
+    );
+    return response;
+  }
+);
+
 // Slice
 const authSlice = createSlice({
   name: 'auth',
@@ -199,6 +223,17 @@ const authSlice = createSlice({
       if (state.user) {
         state.user.twoFactorEnabled = true;
       }
+    });
+    builder.addCase(disable2FA.fulfilled, (state) => {
+      if (state.user) {
+        state.user.twoFactorEnabled = false;
+      }
+    });
+
+    // Update Profile
+    builder.addCase(updateProfile.fulfilled, (state, action) => {
+      state.user = action.payload;
+      localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(action.payload));
     });
   },
 });

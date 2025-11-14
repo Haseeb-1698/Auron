@@ -11,8 +11,6 @@ import {
   Divider,
   Card,
   CardContent,
-  Switch,
-  FormControlLabel,
   Chip,
   Alert,
   Dialog,
@@ -141,7 +139,7 @@ export default function ProfilePage(): JSX.Element {
   const handleEnable2FA = async () => {
     try {
       const result = await dispatch(enable2FA()).unwrap();
-      setQrCodeUrl(result.qrCodeUrl);
+      setQrCodeUrl(result.qrCode);
       setTwoFactorDialog(true);
     } catch (error) {
       toast.error('Failed to enable 2FA');
