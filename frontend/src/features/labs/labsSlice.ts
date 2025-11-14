@@ -2,6 +2,7 @@ import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import api from '@services/api';
 import { API_ENDPOINTS } from '@config/constants';
 import type { Lab, LabInstance } from '../../types';
+import { LabInstanceStatus } from '../../types';
 
 export interface LabsState {
   labs: Lab[];
@@ -80,7 +81,7 @@ const labsSlice = createSlice({
       })
       .addCase(stopLab.fulfilled, (state) => {
         if (state.currentInstance) {
-          state.currentInstance.status = 'stopped';
+          state.currentInstance.status = LabInstanceStatus.STOPPED;
         }
       })
       .addCase(restartLab.fulfilled, (state, action) => {
