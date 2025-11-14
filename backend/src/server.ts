@@ -2,6 +2,7 @@ import express, { Application } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import compression from 'compression';
+import rateLimit from 'express-rate-limit';
 import { createServer, Server as HTTPServer } from 'http';
 import { Server as SocketIOServer } from 'socket.io';
 import dotenv from 'dotenv';
@@ -47,6 +48,19 @@ class App {
   private initializeMiddleware(): void {
     // Security
     this.app.use(helmet());
+
+    // Rate limiting
+    const limiter = rateLimit({
+      windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS || '900000', 10), // 15 minutes default
+      max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS || '100', 10), // 100 requests per windowMs
+      message: 'Too many requests from this IP, please try again later.',
+      standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
+      legacyHeaders: false, // Disable the `X-RateLimit-*` headers
+      // Skip rate limiting for health check endpoint
+      skip: (req) => req.path === '/health',
+    });
+    this.app.use(limiter);
+
     this.app.use(cors({
       origin: process.env.CORS_ORIGIN || 'http://localhost:5173',
       credentials: true,
