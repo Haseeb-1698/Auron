@@ -94,9 +94,11 @@ export const LabInstanceControls: React.FC<LabInstanceControlsProps> = ({
   };
 
   const handleStopLab = async () => {
+    if (!instance) return;
+
     setIsLoading(true);
     try {
-      await dispatch(stopLab(labId)).unwrap();
+      await dispatch(stopLab(instance.id)).unwrap();
       setConfirmDialog(null);
     } catch (error) {
       console.error('Failed to stop lab:', error);

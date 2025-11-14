@@ -201,6 +201,7 @@ export interface AIHint {
   content: string;
   context: string;
   confidence: number;
+  cost: number;
 }
 
 export interface VulnerabilityExplanation {

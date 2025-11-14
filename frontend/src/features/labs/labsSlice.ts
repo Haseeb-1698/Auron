@@ -35,6 +35,21 @@ export const stopLab = createAsyncThunk('labs/stopLab', async (instanceId: strin
   return await api.post<{ success: boolean }>(API_ENDPOINTS.LABS.STOP_INSTANCE(instanceId));
 });
 
+export const restartLab = createAsyncThunk('labs/restartLab', async (instanceId: string) => {
+  return await api.post<LabInstance>(API_ENDPOINTS.LABS.RESTART_INSTANCE(instanceId));
+});
+
+export const resetLab = createAsyncThunk('labs/resetLab', async (instanceId: string) => {
+  return await api.post<LabInstance>(API_ENDPOINTS.LABS.RESET_INSTANCE(instanceId));
+});
+
+export const submitExercise = createAsyncThunk(
+  'labs/submitExercise',
+  async ({ labId, exerciseId, solution }: { labId: string; exerciseId: string; solution: string }) => {
+    return await api.post(API_ENDPOINTS.LABS.SUBMIT(labId, exerciseId), { solution });
+  }
+);
+
 const labsSlice = createSlice({
   name: 'labs',
   initialState,
@@ -61,6 +76,17 @@ const labsSlice = createSlice({
         state.currentLab = action.payload;
       })
       .addCase(startLab.fulfilled, (state, action) => {
+        state.currentInstance = action.payload;
+      })
+      .addCase(stopLab.fulfilled, (state) => {
+        if (state.currentInstance) {
+          state.currentInstance.status = 'stopped';
+        }
+      })
+      .addCase(restartLab.fulfilled, (state, action) => {
+        state.currentInstance = action.payload;
+      })
+      .addCase(resetLab.fulfilled, (state, action) => {
         state.currentInstance = action.payload;
       });
   },

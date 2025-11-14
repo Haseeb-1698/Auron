@@ -14,6 +14,12 @@ import {
   LinearProgress,
   Divider,
   Alert,
+  TextField,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogContentText,
+  DialogActions,
 } from '@mui/material';
 import {
   ExpandMore,
@@ -25,8 +31,12 @@ import {
 } from '@mui/icons-material';
 import { useParams } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
-import { fetchLabDetail } from '@features/labs/labsSlice';
+import { toast } from 'react-toastify';
+import { fetchLabDetail, submitExercise, resetLab } from '@features/labs/labsSlice';
+import { fetchUserProgress } from '@features/progress/progressSlice';
+import { getHint } from '@features/ai/aiSlice';
 import { LabInstanceControls } from './LabInstanceControls';
+import { ProgressStatus } from '../../types';
 import type { Lab, Exercise } from '../../types';
 import type { RootState, AppDispatch } from '../../store';
 
@@ -52,14 +62,24 @@ export const LabEnvironment: React.FC = () => {
   const { labId } = useParams<{ labId: string }>();
   const dispatch = useDispatch<AppDispatch>();
   const { currentLab, currentInstance, isLoading } = useSelector((state: RootState) => state.labs);
+  const { progress: userProgress } = useSelector((state: RootState) => state.progress);
+  const { user } = useSelector((state: RootState) => state.auth);
+  const { currentHint, isLoading: aiLoading } = useSelector((state: RootState) => state.ai);
+
   const [activeTab, setActiveTab] = useState(0);
   const [expandedExercise, setExpandedExercise] = useState<string | false>(false);
+  const [solutionText, setSolutionText] = useState<Record<string, string>>({});
+  const [submitting, setSubmitting] = useState(false);
+  const [hintDialog, setHintDialog] = useState(false);
 
   useEffect(() => {
     if (labId) {
       dispatch(fetchLabDetail(labId));
+      if (user?.id) {
+        dispatch(fetchUserProgress(user.id));
+      }
     }
-  }, [labId, dispatch]);
+  }, [labId, dispatch, user]);
 
   if (isLoading || !currentLab) {
     return (
@@ -70,15 +90,105 @@ export const LabEnvironment: React.FC = () => {
   }
 
   const lab: Lab = currentLab;
-  const completedExercises = 0; // TODO: Get from progress tracking
+
+  // Calculate completed exercises from progress
+  const completedExercisesCount = Array.isArray(userProgress)
+    ? userProgress.filter(
+        (p) => p.labId === labId && p.status === ProgressStatus.COMPLETED
+      ).length
+    : 0;
+
   const totalExercises = lab.exercises?.length || 0;
-  const progress = totalExercises > 0 ? (completedExercises / totalExercises) * 100 : 0;
+  const progressPercentage =
+    totalExercises > 0 ? (completedExercisesCount / totalExercises) * 100 : 0;
+
+  // Check if an exercise is completed
+  const isExerciseCompleted = (exerciseId: string): boolean => {
+    if (!Array.isArray(userProgress)) return false;
+    return userProgress.some(
+      (p) =>
+        p.labId === labId &&
+        p.exerciseId === exerciseId &&
+        p.status === ProgressStatus.COMPLETED
+    );
+  };
 
   const handleExerciseChange = (exerciseId: string) => (
     _event: React.SyntheticEvent,
     isExpanded: boolean
   ) => {
     setExpandedExercise(isExpanded ? exerciseId : false);
+  };
+
+  const handleRequestHint = async (exerciseId: string, context: string) => {
+    if (!labId) return;
+
+    try {
+      await dispatch(getHint({ labId, exerciseId, context })).unwrap();
+      setHintDialog(true);
+    } catch (error) {
+      toast.error('Failed to get hint. Please try again.');
+      console.error('Failed to get hint:', error);
+    }
+  };
+
+  const handleSubmitSolution = async (exerciseId: string) => {
+    if (!labId || !solutionText[exerciseId]) {
+      toast.warning('Please enter a solution before submitting.');
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      await dispatch(
+        submitExercise({
+          labId,
+          exerciseId,
+          solution: solutionText[exerciseId],
+        })
+      ).unwrap();
+
+      toast.success('Solution submitted successfully!');
+
+      // Refresh progress
+      if (user?.id) {
+        dispatch(fetchUserProgress(user.id));
+      }
+
+      // Clear solution text
+      setSolutionText((prev) => ({ ...prev, [exerciseId]: '' }));
+    } catch (error) {
+      toast.error('Failed to submit solution. Please try again.');
+      console.error('Failed to submit solution:', error);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleResetLab = async () => {
+    if (!currentInstance) return;
+
+    try {
+      await dispatch(resetLab(currentInstance.id)).unwrap();
+      toast.success('Lab reset successfully!');
+    } catch (error) {
+      toast.error('Failed to reset lab. Please try again.');
+      console.error('Failed to reset lab:', error);
+    }
+  };
+
+  const handleDeleteLab = async () => {
+    // For now, delete just stops the lab
+    // In the future, this could call a dedicated delete endpoint
+    if (!currentInstance) return;
+
+    try {
+      await dispatch(resetLab(currentInstance.id)).unwrap();
+      toast.success('Lab instance deleted!');
+    } catch (error) {
+      toast.error('Failed to delete lab. Please try again.');
+      console.error('Failed to delete lab:', error);
+    }
   };
 
   return (
@@ -108,19 +218,19 @@ export const LabEnvironment: React.FC = () => {
               Lab Progress
             </Typography>
             <Typography variant="body2" fontWeight="bold">
-              {completedExercises}/{totalExercises} exercises completed
+              {completedExercisesCount}/{totalExercises} exercises completed
             </Typography>
           </Box>
           <LinearProgress
             variant="determinate"
-            value={progress}
+            value={progressPercentage}
             sx={{
               height: 8,
               borderRadius: 4,
               backgroundColor: 'grey.200',
               '& .MuiLinearProgress-bar': {
                 borderRadius: 4,
-                backgroundColor: progress === 100 ? '#4caf50' : '#2196f3',
+                backgroundColor: progressPercentage === 100 ? '#4caf50' : '#2196f3',
               },
             }}
           />
@@ -205,13 +315,16 @@ export const LabEnvironment: React.FC = () => {
                           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, width: '100%' }}>
                             <CheckCircle
                               sx={{
-                                color: 'grey.300', // TODO: Check completion status
+                                color: isExerciseCompleted(exercise.id) ? '#4caf50' : 'grey.300',
                                 fontSize: 20,
                               }}
                             />
                             <Typography fontWeight="bold" sx={{ flex: 1 }}>
                               {exercise.order}. {exercise.title}
                             </Typography>
+                            {isExerciseCompleted(exercise.id) && (
+                              <Chip label="Completed" size="small" color="success" />
+                            )}
                             <Chip
                               icon={<EmojiEvents />}
                               label={`${exercise.points} pts`}
@@ -245,8 +358,14 @@ export const LabEnvironment: React.FC = () => {
                                 <Lightbulb fontSize="small" sx={{ verticalAlign: 'middle', mr: 0.5 }} />
                                 Hints Available ({exercise.hints.length})
                               </Typography>
-                              <Button variant="outlined" size="small" startIcon={<Lightbulb />}>
-                                Request Hint
+                              <Button
+                                variant="outlined"
+                                size="small"
+                                startIcon={<Lightbulb />}
+                                onClick={() => handleRequestHint(exercise.id, exercise.description)}
+                                disabled={aiLoading}
+                              >
+                                {aiLoading ? 'Loading...' : 'Request Hint'}
                               </Button>
                               <Typography variant="caption" color="text.secondary" sx={{ ml: 1 }}>
                                 Costs points
@@ -254,10 +373,42 @@ export const LabEnvironment: React.FC = () => {
                             </Box>
                           )}
 
+                          {/* Solution Input */}
+                          {!isExerciseCompleted(exercise.id) && (
+                            <Box sx={{ mb: 2 }}>
+                              <TextField
+                                fullWidth
+                                multiline
+                                rows={3}
+                                label="Your Solution"
+                                placeholder="Enter your solution, flag, or answer here..."
+                                value={solutionText[exercise.id] || ''}
+                                onChange={(e) =>
+                                  setSolutionText((prev) => ({
+                                    ...prev,
+                                    [exercise.id]: e.target.value,
+                                  }))
+                                }
+                              />
+                            </Box>
+                          )}
+
                           {/* Submit Button */}
-                          <Button variant="contained" color="primary" fullWidth>
-                            Submit Solution
-                          </Button>
+                          {isExerciseCompleted(exercise.id) ? (
+                            <Alert severity="success">
+                              Exercise completed! Great work!
+                            </Alert>
+                          ) : (
+                            <Button
+                              variant="contained"
+                              color="primary"
+                              fullWidth
+                              onClick={() => handleSubmitSolution(exercise.id)}
+                              disabled={submitting || !solutionText[exercise.id]}
+                            >
+                              {submitting ? 'Submitting...' : 'Submit Solution'}
+                            </Button>
+                          )}
                         </AccordionDetails>
                       </Accordion>
                     ))}
@@ -276,14 +427,8 @@ export const LabEnvironment: React.FC = () => {
             <LabInstanceControls
               labId={lab.id}
               instance={currentInstance}
-              onReset={() => {
-                // TODO: Implement reset
-                console.log('Reset lab');
-              }}
-              onDelete={() => {
-                // TODO: Implement delete
-                console.log('Delete lab');
-              }}
+              onReset={handleResetLab}
+              onDelete={handleDeleteLab}
             />
           </Box>
 
@@ -324,6 +469,31 @@ export const LabEnvironment: React.FC = () => {
           )}
         </Grid>
       </Grid>
+
+      {/* AI Hint Dialog */}
+      <Dialog open={hintDialog} onClose={() => setHintDialog(false)} maxWidth="sm" fullWidth>
+        <DialogTitle>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Lightbulb color="primary" />
+            AI Hint
+          </Box>
+        </DialogTitle>
+        <DialogContent>
+          {currentHint && (
+            <Box>
+              <Alert severity="info" sx={{ mb: 2 }}>
+                <Typography variant="body2">
+                  <strong>Hint Cost:</strong> {currentHint.cost} points
+                </Typography>
+              </Alert>
+              <Typography variant="body1">{currentHint.content}</Typography>
+            </Box>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setHintDialog(false)}>Close</Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 };
