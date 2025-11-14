@@ -6,17 +6,24 @@ services:
     image: vulnerables/web-dvwa:latest
     container_name: auron-dvwa
     ports:
-      - "8080:80"
+      - "127.0.0.1:8080:80"
     environment:
       - MYSQL_HOST=dvwa-db
       - MYSQL_DATABASE=dvwa
       - MYSQL_USER=dvwa
       - MYSQL_PASSWORD=dvwa_password
     depends_on:
-      - dvwa-db
+      dvwa-db:
+        condition: service_healthy
     networks:
       - auron-network
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost/ || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
 
   dvwa-db:
     image: mysql:5.7
@@ -31,23 +38,52 @@ services:
     networks:
       - auron-network
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "dvwa", "-pdvwa_password"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
 
   # OWASP Juice Shop
   juiceshop:
     image: bkimminich/juice-shop:latest
     container_name: auron-juiceshop
     ports:
-      - "3000:3000"
+      - "127.0.0.1:3000:3000"
     networks:
       - auron-network
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:3000 || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # OWASP ZAP (for advanced vulnerability scanning)
+  zap:
+    image: zaproxy/zap-stable:latest
+    container_name: auron-zap
+    command: zap.sh -daemon -host 0.0.0.0 -port 8090 -config api.addrs.addr.name=.* -config api.addrs.addr.regex=true -config api.key=auron-zap-api-key
+    ports:
+      - "127.0.0.1:8090:8090"
+    networks:
+      - auron-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8090 || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
 
   # Wazuh Indexer (OpenSearch-based)
   wazuh-indexer:
     image: wazuh/wazuh-indexer:latest
     container_name: auron-wazuh-indexer
     ports:
-      - "9200:9200"
+      - "127.0.0.1:9200:9200"
     environment:
       - "OPENSEARCH_JAVA_OPTS=-Xms512m -Xmx512m"
       - discovery.type=single-node
@@ -77,10 +113,10 @@ services:
     image: wazuh/wazuh-manager:latest
     container_name: auron-wazuh
     ports:
-      - "1514:1514"
-      - "1515:1515"
-      - "514:514/udp"
-      - "55000:55000"
+      - "127.0.0.1:1514:1514"
+      - "127.0.0.1:1515:1515"
+      - "127.0.0.1:514:514/udp"
+      - "127.0.0.1:55000:55000"
     environment:
       - INDEXER_URL=https://wazuh-indexer:9200
       - INDEXER_USERNAME=admin
@@ -101,7 +137,7 @@ services:
     image: wazuh/wazuh-dashboard:latest
     container_name: auron-wazuh-dashboard
     ports:
-      - "5601:5601"
+      - "127.0.0.1:5601:5601"
     environment:
       - INDEXER_USERNAME=admin
       - INDEXER_PASSWORD=SecretPassword
@@ -123,27 +159,35 @@ services:
     image: tleemcjr/metasploitable2:latest
     container_name: auron-metasploitable
     ports:
-      - "8081:80"
-      - "2222:22"
-      - "2121:21"
-      - "3306:3306"
+      - "127.0.0.1:8081:80"
+      - "127.0.0.1:2222:22"
+      - "127.0.0.1:2121:21"
+      - "127.0.0.1:3306:3306"
     networks:
       - auron-network
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost/ || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
 
   # Attack Scripts Container (Kali Linux with prebuilt scripts)
   attack-scripts:
-    image: kalilinux/kali-rolling:latest
+    build:
+      context: ./attack-scripts
+      dockerfile: Dockerfile
     container_name: auron-attack-scripts
-    command: tail -f /dev/null
-    environment:
-      - DEBIAN_FRONTEND=noninteractive
     volumes:
       - ./attack-scripts:/scripts:ro
     depends_on:
-      - dvwa
-      - juiceshop
-      - metasploitable
+      dvwa:
+        condition: service_healthy
+      juiceshop:
+        condition: service_healthy
+      metasploitable:
+        condition: service_healthy
     networks:
       - auron-network
     restart: unless-stopped
@@ -155,7 +199,7 @@ services:
     image: postgres:15-alpine
     container_name: auron-postgres
     ports:
-      - "5432:5432"
+      - "127.0.0.1:5432:5432"
     environment:
       - POSTGRES_DB=${DB_NAME:-auron_db}
       - POSTGRES_USER=${DB_USER:-auron_user}
@@ -176,7 +220,7 @@ services:
     image: redis:7-alpine
     container_name: auron-redis
     ports:
-      - "6379:6379"
+      - "127.0.0.1:6379:6379"
     command: redis-server --appendonly yes
     volumes:
       - redis-data:/data
@@ -194,7 +238,7 @@ services:
     build: ./backend
     container_name: auron-backend
     ports:
-      - "4000:4000"
+      - "127.0.0.1:4000:4000"
     environment:
       - NODE_ENV=${NODE_ENV:-production}
       - PORT=4000
@@ -207,10 +251,16 @@ services:
       - REDIS_PORT=6379
       - JWT_SECRET=${JWT_SECRET:-change_this_secret_key_in_production}
       - CORS_ORIGIN=${CORS_ORIGIN:-http://localhost:5173}
+      - ZAP_API_URL=http://zap:8090
+      - ZAP_API_KEY=auron-zap-api-key
+      - RATE_LIMIT_WINDOW_MS=900000
+      - RATE_LIMIT_MAX_REQUESTS=100
     depends_on:
       postgres:
         condition: service_healthy
       redis:
+        condition: service_healthy
+      zap:
         condition: service_healthy
     volumes:
       - backend-logs:/app/logs
@@ -219,6 +269,12 @@ services:
     networks:
       - auron-network
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:4000/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
 
   # Frontend Dashboard
   frontend:
@@ -227,15 +283,22 @@ services:
       dockerfile: Dockerfile
     container_name: auron-frontend
     ports:
-      - "5173:80"
+      - "127.0.0.1:5173:80"
     environment:
       - VITE_API_URL=http://localhost:4000/api
       - VITE_WS_URL=ws://localhost:4000
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
     networks:
       - auron-network
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:80 || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
 
 networks:
   auron-network:
