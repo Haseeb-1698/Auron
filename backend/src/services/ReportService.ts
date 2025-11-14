@@ -6,6 +6,7 @@ import { Scan } from '@models/Scan';
 import { logger } from '@utils/logger';
 import fs from 'fs';
 import path from 'path';
+import puppeteer from 'puppeteer';
 
 /**
  * ReportService
@@ -421,32 +422,347 @@ export class ReportService {
     report: Report,
     data: ReportData
   ): Promise<{ filePath: string; fileName: string; fileSize: number }> {
-    // For now, generate HTML and note that PDF generation requires additional library
-    // In production, use puppeteer or pdfkit
     const fileName = `report_${report.id}.pdf`;
     const filePath = path.join(this.REPORTS_DIR, fileName);
 
-    // Generate simple text-based PDF content (placeholder)
-    const content = `
-${report.title}
-${'='.repeat(report.title.length)}
+    try {
+      // Generate HTML content for PDF
+      const htmlContent = this.generatePDFHTML(report, data);
 
-${report.description || ''}
+      // Launch headless browser and generate PDF
+      const browser = await puppeteer.launch({
+        headless: true,
+        args: [
+          '--no-sandbox',
+          '--disable-setuid-sandbox',
+          '--disable-dev-shm-usage',
+          '--disable-gpu',
+        ],
+      });
 
-Summary:
-${JSON.stringify(data.summary, null, 2)}
+      const page = await browser.newPage();
+      await page.setContent(htmlContent, { waitUntil: 'networkidle0' });
 
-Full Report:
-${JSON.stringify(data, null, 2)}
+      // Generate PDF with proper formatting
+      await page.pdf({
+        path: filePath,
+        format: 'A4',
+        printBackground: true,
+        margin: {
+          top: '20mm',
+          right: '15mm',
+          bottom: '20mm',
+          left: '15mm',
+        },
+      });
+
+      await browser.close();
+
+      const stats = fs.statSync(filePath);
+
+      return {
+        filePath,
+        fileName,
+        fileSize: stats.size,
+      };
+    } catch (error) {
+      logger.error('Failed to generate PDF with Puppeteer:', error);
+      throw new Error('PDF generation failed');
+    }
+  }
+
+  /**
+   * Generate HTML content for PDF export
+   */
+  private static generatePDFHTML(report: Report, data: ReportData): string {
+    const { summary } = data;
+    const date = new Date().toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    });
+
+    let detailsHTML = '';
+
+    // Format different report types
+    if (report.reportType === ReportType.VULNERABILITY_SCAN && data.vulnerabilities) {
+      const vulnsBySeverity = {
+        critical: data.vulnerabilities.filter((v: any) => v.severity === 'critical'),
+        high: data.vulnerabilities.filter((v: any) => v.severity === 'high'),
+        medium: data.vulnerabilities.filter((v: any) => v.severity === 'medium'),
+        low: data.vulnerabilities.filter((v: any) => v.severity === 'low'),
+        info: data.vulnerabilities.filter((v: any) => v.severity === 'info'),
+      };
+
+      detailsHTML = `
+        <h2>Vulnerability Details</h2>
+        <div class="vuln-stats">
+          <div class="stat-item critical">
+            <span class="stat-number">${vulnsBySeverity.critical.length}</span>
+            <span class="stat-label">Critical</span>
+          </div>
+          <div class="stat-item high">
+            <span class="stat-number">${vulnsBySeverity.high.length}</span>
+            <span class="stat-label">High</span>
+          </div>
+          <div class="stat-item medium">
+            <span class="stat-number">${vulnsBySeverity.medium.length}</span>
+            <span class="stat-label">Medium</span>
+          </div>
+          <div class="stat-item low">
+            <span class="stat-number">${vulnsBySeverity.low.length}</span>
+            <span class="stat-label">Low</span>
+          </div>
+          <div class="stat-item info">
+            <span class="stat-number">${vulnsBySeverity.info.length}</span>
+            <span class="stat-label">Info</span>
+          </div>
+        </div>
+
+        ${Object.entries(vulnsBySeverity)
+          .filter(([, vulns]) => vulns.length > 0)
+          .map(
+            ([severity, vulns]) => `
+          <div class="severity-section">
+            <h3 class="${severity}">${severity.charAt(0).toUpperCase() + severity.slice(1)} Vulnerabilities</h3>
+            ${(vulns as any[])
+              .map(
+                (v) => `
+              <div class="vulnerability">
+                <h4>${v.name}</h4>
+                <p><strong>Description:</strong> ${v.description || 'N/A'}</p>
+                ${v.location ? `<p><strong>Location:</strong> ${v.location}</p>` : ''}
+                ${v.solution ? `<p><strong>Solution:</strong> ${v.solution}</p>` : ''}
+                ${v.references && v.references.length > 0 ? `<p><strong>References:</strong> ${v.references.join(', ')}</p>` : ''}
+              </div>
+            `
+              )
+              .join('')}
+          </div>
+        `
+          )
+          .join('')}
+      `;
+    } else if (data.labs) {
+      detailsHTML = `
+        <h2>Lab Details</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>Lab Name</th>
+              <th>Status</th>
+              <th>Score</th>
+              <th>Time Spent</th>
+              <th>Completed</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${data.labs
+              .map(
+                (lab: any) => `
+              <tr>
+                <td>${lab.name}</td>
+                <td>${lab.completed ? '✓ Completed' : '○ In Progress'}</td>
+                <td>${lab.score || 0}</td>
+                <td>${Math.floor((lab.timeSpent || 0) / 60)} min</td>
+                <td>${lab.completedAt ? new Date(lab.completedAt).toLocaleDateString() : '-'}</td>
+              </tr>
+            `
+              )
+              .join('')}
+          </tbody>
+        </table>
+      `;
+    }
+
+    return `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>${report.title}</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      line-height: 1.6;
+      color: #333;
+      padding: 20px;
+    }
+    .header {
+      border-bottom: 3px solid #4CAF50;
+      padding-bottom: 20px;
+      margin-bottom: 30px;
+    }
+    h1 {
+      color: #2c3e50;
+      font-size: 28px;
+      margin-bottom: 10px;
+    }
+    .meta {
+      color: #7f8c8d;
+      font-size: 14px;
+    }
+    .summary {
+      background-color: #f8f9fa;
+      padding: 20px;
+      border-radius: 8px;
+      margin-bottom: 30px;
+      border-left: 4px solid #4CAF50;
+    }
+    .summary h2 {
+      color: #2c3e50;
+      font-size: 20px;
+      margin-bottom: 15px;
+    }
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 15px;
+    }
+    .summary-item {
+      padding: 10px;
+      background: white;
+      border-radius: 4px;
+      border-left: 3px solid #4CAF50;
+    }
+    .summary-label {
+      font-size: 12px;
+      color: #7f8c8d;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .summary-value {
+      font-size: 24px;
+      font-weight: bold;
+      color: #2c3e50;
+      margin-top: 5px;
+    }
+    .vuln-stats {
+      display: flex;
+      gap: 15px;
+      margin: 20px 0;
+      flex-wrap: wrap;
+    }
+    .stat-item {
+      flex: 1;
+      min-width: 100px;
+      padding: 15px;
+      border-radius: 8px;
+      text-align: center;
+      color: white;
+    }
+    .stat-item.critical { background-color: #e74c3c; }
+    .stat-item.high { background-color: #e67e22; }
+    .stat-item.medium { background-color: #f39c12; }
+    .stat-item.low { background-color: #3498db; }
+    .stat-item.info { background-color: #95a5a6; }
+    .stat-number {
+      display: block;
+      font-size: 32px;
+      font-weight: bold;
+    }
+    .stat-label {
+      display: block;
+      font-size: 12px;
+      text-transform: uppercase;
+      margin-top: 5px;
+    }
+    h2, h3, h4 {
+      color: #2c3e50;
+      margin-top: 20px;
+      margin-bottom: 10px;
+    }
+    h3.critical { color: #e74c3c; }
+    h3.high { color: #e67e22; }
+    h3.medium { color: #f39c12; }
+    h3.low { color: #3498db; }
+    h3.info { color: #95a5a6; }
+    .vulnerability {
+      background: #fff;
+      padding: 15px;
+      margin-bottom: 15px;
+      border-left: 4px solid #e74c3c;
+      border-radius: 4px;
+      page-break-inside: avoid;
+    }
+    .vulnerability h4 {
+      margin-top: 0;
+      color: #2c3e50;
+    }
+    .vulnerability p {
+      margin: 8px 0;
+      font-size: 14px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 20px 0;
+    }
+    th, td {
+      border: 1px solid #ddd;
+      padding: 12px;
+      text-align: left;
+    }
+    th {
+      background-color: #4CAF50;
+      color: white;
+      font-weight: 600;
+    }
+    tr:nth-child(even) {
+      background-color: #f8f9fa;
+    }
+    .footer {
+      margin-top: 40px;
+      padding-top: 20px;
+      border-top: 2px solid #ecf0f1;
+      text-align: center;
+      color: #7f8c8d;
+      font-size: 12px;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>${report.title}</h1>
+    <div class="meta">
+      <div>Generated: ${date}</div>
+      ${report.description ? `<div>${report.description}</div>` : ''}
+    </div>
+  </div>
+
+  ${
+    summary
+      ? `
+  <div class="summary">
+    <h2>Summary</h2>
+    <div class="summary-grid">
+      ${Object.entries(summary)
+        .map(
+          ([key, value]) => `
+        <div class="summary-item">
+          <div class="summary-label">${key.replace(/([A-Z])/g, ' $1').trim()}</div>
+          <div class="summary-value">${value}</div>
+        </div>
+      `
+        )
+        .join('')}
+    </div>
+  </div>
+  `
+      : ''
+  }
+
+  ${detailsHTML}
+
+  <div class="footer">
+    <p>Auron Cybersecurity Training Platform</p>
+    <p>This report was automatically generated by the Auron platform.</p>
+  </div>
+</body>
+</html>
     `.trim();
-
-    fs.writeFileSync(filePath, content, 'utf-8');
-
-    return {
-      filePath,
-      fileName,
-      fileSize: Buffer.byteLength(content, 'utf-8'),
-    };
   }
 
   /**

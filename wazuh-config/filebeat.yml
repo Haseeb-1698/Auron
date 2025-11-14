@@ -1,0 +1,76 @@
+filebeat.inputs:
+  # Collect logs from Docker containers
+  - type: docker
+    containers:
+      ids:
+        - '*'
+    processors:
+      - add_docker_metadata: ~
+      - decode_json_fields:
+          fields: ["message"]
+          target: "json"
+          overwrite_keys: true
+
+  # Monitor DVWA Apache access logs
+  - type: log
+    enabled: true
+    paths:
+      - /var/log/containers/dvwa-access.log
+    fields:
+      service: dvwa
+      log_type: access
+    fields_under_root: true
+
+  # Monitor DVWA Apache error logs
+  - type: log
+    enabled: true
+    paths:
+      - /var/log/containers/dvwa-error.log
+    fields:
+      service: dvwa
+      log_type: error
+    fields_under_root: true
+
+  # Monitor Juice Shop logs
+  - type: log
+    enabled: true
+    paths:
+      - /var/log/containers/juiceshop.log
+    fields:
+      service: juiceshop
+      log_type: application
+    fields_under_root: true
+
+  # Monitor Metasploitable logs
+  - type: log
+    enabled: true
+    paths:
+      - /var/log/containers/metasploitable-*.log
+    fields:
+      service: metasploitable
+      log_type: system
+    fields_under_root: true
+
+  # Monitor Attack Scripts execution logs
+  - type: log
+    enabled: true
+    paths:
+      - /var/log/containers/attack-scripts.log
+    fields:
+      service: attack-scripts
+      log_type: execution
+    fields_under_root: true
+
+# Output to Wazuh Manager via syslog
+output.logstash:
+  hosts: ["wazuh:5000"]
+  ssl.enabled: false
+
+# Logging settings
+logging.level: info
+logging.to_files: true
+logging.files:
+  path: /var/log/filebeat
+  name: filebeat
+  keepfiles: 7
+  permissions: 0644

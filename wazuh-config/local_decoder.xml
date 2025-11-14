@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Auron Platform - Custom Wazuh Decoders -->
+<decoder_dir>
+
+  <!-- DVWA Log Decoder -->
+  <decoder name="dvwa-access">
+    <parent>web-accesslog</parent>
+    <prematch>^dvwa</prematch>
+  </decoder>
+
+  <decoder name="dvwa-access">
+    <parent>dvwa-access</parent>
+    <regex offset="after_parent">^(\S+) \S+ \S+ \[([^\]]+)\] "(\S+) (\S+) HTTP/\S+" (\d+) </regex>
+    <order>srcip, timestamp, method, url, status</order>
+  </decoder>
+
+  <!-- Juice Shop Log Decoder -->
+  <decoder name="juiceshop">
+    <prematch>^juiceshop</prematch>
+  </decoder>
+
+  <decoder name="juiceshop">
+    <parent>juiceshop</parent>
+    <regex offset="after_parent">(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d+Z) (\S+) (\S+) (.+)$</regex>
+    <order>timestamp, level, component, message</order>
+  </decoder>
+
+  <!-- Metasploitable SSH Decoder -->
+  <decoder name="metasploitable-ssh">
+    <prematch>^metasploitable.*sshd</prematch>
+  </decoder>
+
+  <decoder name="metasploitable-ssh">
+    <parent>metasploitable-ssh</parent>
+    <regex offset="after_prematch">Failed password for (\S+) from (\S+) port (\d+)</regex>
+    <order>user, srcip, srcport</order>
+  </decoder>
+
+  <!-- Attack Scripts Decoder -->
+  <decoder name="attack-scripts">
+    <prematch>^attack-scripts</prematch>
+  </decoder>
+
+  <decoder name="attack-scripts">
+    <parent>attack-scripts</parent>
+    <regex offset="after_prematch">(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}) \[(\S+)\] (.+)$</regex>
+    <order>timestamp, tool, command</order>
+  </decoder>
+
+  <!-- SQL Injection Pattern Decoder -->
+  <decoder name="sql-injection-pattern">
+    <prematch type="pcre2">(?i)(union\s+select|select\s+.*\s+from|'|"\s*or\s+)</prematch>
+  </decoder>
+
+  <!-- Web Scanner User-Agent Decoder -->
+  <decoder name="web-scanner-ua">
+    <prematch>User-Agent:</prematch>
+  </decoder>
+
+  <decoder name="web-scanner-ua">
+    <parent>web-scanner-ua</parent>
+    <regex offset="after_prematch">(nikto|dirbuster|dirb|sqlmap|nmap|masscan|wfuzz|gobuster|burp)</regex>
+    <order>scanner_name</order>
+  </decoder>
+
+</decoder_dir>

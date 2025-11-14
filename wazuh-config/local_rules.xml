@@ -1,0 +1,225 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Auron Platform - Custom Wazuh Rules for Workshop Detection -->
+<group name="auron,web,attack">
+
+  <!-- SQL Injection Detection -->
+  <rule id="100001" level="10">
+    <if_sid>31100</if_sid>
+    <regex type="pcre2">(?i)(union\s+select|select\s+.*\s+from|insert\s+into|drop\s+table|'|"\s*or\s+1\s*=\s*1|--|\bor\b\s+\d+\s*=\s*\d+)</regex>
+    <description>SQL Injection attempt detected</description>
+    <group>sql_injection,attack,</group>
+  </rule>
+
+  <rule id="100002" level="10">
+    <match>SQL</match>
+    <regex type="pcre2">(?i)(sqlmap|union|select.*from|insert.*into|drop.*table|update.*set|delete.*from)</regex>
+    <description>SQL Injection tool or query detected</description>
+    <group>sql_injection,attack,</group>
+  </rule>
+
+  <!-- Cross-Site Scripting (XSS) Detection -->
+  <rule id="100010" level="8">
+    <regex type="pcre2">(?i)(&lt;script|&lt;iframe|&lt;object|&lt;embed|javascript:|onerror=|onload=|eval\(|alert\()</regex>
+    <description>Cross-Site Scripting (XSS) attempt detected</description>
+    <group>xss,attack,</group>
+  </rule>
+
+  <rule id="100011" level="8">
+    <match>&lt;/script&gt;</match>
+    <description>XSS script tag detected</description>
+    <group>xss,attack,</group>
+  </rule>
+
+  <!-- Directory Traversal Detection -->
+  <rule id="100020" level="8">
+    <regex type="pcre2">(?i)(\.\.\/|\.\.\\|%2e%2e%2f|%2e%2e\/|\.\.%2f|%2e%2e%5c)</regex>
+    <description>Directory Traversal attempt detected</description>
+    <group>directory_traversal,attack,</group>
+  </rule>
+
+  <rule id="100021" level="8">
+    <regex>/etc/passwd|/etc/shadow|windows/system32|boot.ini</regex>
+    <description>Attempt to access sensitive system files</description>
+    <group>directory_traversal,attack,</group>
+  </rule>
+
+  <!-- Command Injection Detection -->
+  <rule id="100030" level="10">
+    <regex type="pcre2">(?i)(\||;|\$\(|`|&amp;&amp;|\|\|).*?(cat|ls|wget|curl|nc|bash|sh|cmd|powershell)</regex>
+    <description>Command Injection attempt detected</description>
+    <group>command_injection,attack,</group>
+  </rule>
+
+  <rule id="100031" level="10">
+    <match>|cat</match>
+    <regex type="pcre2">\|.*?cat\s+/etc/</regex>
+    <description>Command injection reading system files</description>
+    <group>command_injection,attack,</group>
+  </rule>
+
+  <!-- Brute Force Detection -->
+  <rule id="100040" level="8" frequency="5" timeframe="120">
+    <if_matched_sid>100040</if_matched_sid>
+    <same_source_ip />
+    <description>Multiple authentication failures (Brute Force)</description>
+    <group>brute_force,attack,</group>
+  </rule>
+
+  <rule id="100041" level="10" frequency="10" timeframe="60">
+    <if_matched_sid>5503</if_matched_sid>
+    <same_source_ip />
+    <description>High volume of authentication failures (Aggressive Brute Force)</description>
+    <group>brute_force,attack,</group>
+  </rule>
+
+  <!-- Port Scanning Detection -->
+  <rule id="100050" level="6" frequency="10" timeframe="30">
+    <if_sid>5710</if_sid>
+    <same_source_ip />
+    <description>Multiple connection attempts from same IP (Possible Port Scan)</description>
+    <group>port_scan,recon,</group>
+  </rule>
+
+  <rule id="100051" level="8" frequency="20" timeframe="60">
+    <if_matched_sid>100050</if_matched_sid>
+    <description>High volume port scanning activity detected</description>
+    <group>port_scan,recon,</group>
+  </rule>
+
+  <!-- Nikto/Dirb/Dirbuster Detection -->
+  <rule id="100060" level="7">
+    <match>nikto|dirbuster|dirb|wfuzz|gobuster</match>
+    <description>Web vulnerability scanner detected (Nikto/Dirb/Dirbuster)</description>
+    <group>web_scan,recon,</group>
+  </rule>
+
+  <rule id="100061" level="7">
+    <regex type="pcre2">User-Agent.*?(nikto|dirbuster|dirb|sqlmap|nmap|masscan|wfuzz|gobuster|burp)</regex>
+    <description>Attack tool User-Agent detected</description>
+    <group>web_scan,recon,</group>
+  </rule>
+
+  <!-- Nmap Detection -->
+  <rule id="100070" level="6" frequency="15" timeframe="20">
+    <if_sid>5710</if_sid>
+    <same_source_ip />
+    <description>Nmap-like scanning pattern detected</description>
+    <group>nmap,recon,</group>
+  </rule>
+
+  <!-- Hydra Brute Force Detection -->
+  <rule id="100080" level="10" frequency="8" timeframe="30">
+    <if_matched_sid>100040</if_matched_sid>
+    <same_source_ip />
+    <description>Hydra-like brute force pattern detected</description>
+    <group>hydra,brute_force,attack,</group>
+  </rule>
+
+  <!-- DVWA Specific Rules -->
+  <rule id="100100" level="5">
+    <field name="service">dvwa</field>
+    <match>security=low</match>
+    <description>DVWA accessed in low security mode</description>
+    <group>dvwa,</group>
+  </rule>
+
+  <rule id="100101" level="8">
+    <field name="service">dvwa</field>
+    <regex type="pcre2">(?i)(union|select|' or|sql)</regex>
+    <description>SQL Injection attempt on DVWA</description>
+    <group>dvwa,sql_injection,attack,</group>
+  </rule>
+
+  <!-- Juice Shop Specific Rules -->
+  <rule id="100110" level="5">
+    <field name="service">juiceshop</field>
+    <match>/rest/user/login</match>
+    <description>Juice Shop login attempt</description>
+    <group>juiceshop,</group>
+  </rule>
+
+  <rule id="100111" level="8" frequency="5" timeframe="60">
+    <if_matched_sid>100110</if_matched_sid>
+    <same_source_ip />
+    <description>Multiple Juice Shop login attempts (Possible Brute Force)</description>
+    <group>juiceshop,brute_force,attack,</group>
+  </rule>
+
+  <!-- Metasploitable Specific Rules -->
+  <rule id="100120" level="8">
+    <field name="service">metasploitable</field>
+    <match>Failed password</match>
+    <description>Failed SSH authentication on Metasploitable</description>
+    <group>metasploitable,authentication,</group>
+  </rule>
+
+  <rule id="100121" level="10" frequency="5" timeframe="120">
+    <if_matched_sid>100120</if_matched_sid>
+    <same_source_ip />
+    <description>SSH Brute Force attack on Metasploitable</description>
+    <group>metasploitable,brute_force,attack,</group>
+  </rule>
+
+  <!-- Attack Scripts Execution Detection -->
+  <rule id="100130" level="5">
+    <field name="service">attack-scripts</field>
+    <match>Starting</match>
+    <description>Attack script execution started</description>
+    <group>attack-scripts,</group>
+  </rule>
+
+  <rule id="100131" level="7">
+    <field name="service">attack-scripts</field>
+    <regex type="pcre2">(nmap|sqlmap|nikto|dirb|hydra|metasploit)</regex>
+    <description>Offensive security tool executed from attack-scripts container</description>
+    <group>attack-scripts,tool_execution,</group>
+  </rule>
+
+  <!-- Generic Web Attack Patterns -->
+  <rule id="100200" level="8">
+    <regex type="pcre2">(?i)(admin'--|' or 1=1|' or '1'='1|' drop|'; exec|'; select)</regex>
+    <description>Advanced SQL injection pattern detected</description>
+    <group>sql_injection,attack,</group>
+  </rule>
+
+  <rule id="100201" level="8">
+    <regex type="pcre2">(?i)(\bexec\b|\bexecute\b|\beval\b|\bsystem\b).*?\(</regex>
+    <description>Dangerous function execution attempt</description>
+    <group>code_injection,attack,</group>
+  </rule>
+
+  <rule id="100202" level="7">
+    <regex type="pcre2">(?i)(/\.env|/config\.php|/wp-config\.php|/\.git/|/\.ssh/)</regex>
+    <description>Attempt to access sensitive configuration files</description>
+    <group>file_access,attack,</group>
+  </rule>
+
+  <!-- File Upload Attack Detection -->
+  <rule id="100210" level="9">
+    <regex type="pcre2">(?i)(\.php|\.asp|\.aspx|\.jsp|\.cgi|\.sh|\.exe).*?(upload|file)</regex>
+    <description>Suspicious file upload attempt</description>
+    <group>file_upload,attack,</group>
+  </rule>
+
+  <!-- XXE (XML External Entity) Detection -->
+  <rule id="100220" level="9">
+    <regex type="pcre2">(?i)(&lt;!DOCTYPE|&lt;!ENTITY|SYSTEM|PUBLIC).*?(file://|http://|ftp://)</regex>
+    <description>XXE (XML External Entity) attack attempt</description>
+    <group>xxe,attack,</group>
+  </rule>
+
+  <!-- LDAP Injection Detection -->
+  <rule id="100230" level="8">
+    <regex type="pcre2">(?i)(\*\)|\|\||&amp;).*?(cn=|uid=|objectClass=)</regex>
+    <description>LDAP Injection attempt detected</description>
+    <group>ldap_injection,attack,</group>
+  </rule>
+
+  <!-- SSRF Detection -->
+  <rule id="100240" level="9">
+    <regex type="pcre2">(?i)(url=|uri=|path=|dest=|redirect=|page=)(http://localhost|http://127\.0\.0\.1|http://169\.254\.169\.254|file://)</regex>
+    <description>Server-Side Request Forgery (SSRF) attempt</description>
+    <group>ssrf,attack,</group>
+  </rule>
+
+</group>
