@@ -196,7 +196,9 @@ install_dependencies() {
         ufw \
         fail2ban \
         unzip \
-        bc
+        bc \
+        openssl \
+        jq
 
     print_success "System dependencies installed"
 }
@@ -309,36 +311,46 @@ configure_environment() {
     cp .env.example .env
 
     # Get server IP
-    server_ip=$(curl -s ifconfig.me || echo "YOUR_SERVER_IP")
+    server_ip=$(curl -s ifconfig.me 2>/dev/null || echo "YOUR_SERVER_IP")
 
     print_warning "Environment configuration:"
+    echo "Generating secure passwords..."
 
-    # Generate secure passwords
-    postgres_password=$(openssl rand -base64 32 | tr -d "=+/" | cut -c1-25)
-    jwt_secret=$(openssl rand -base64 64 | tr -d "=+/" | cut -c1-64)
-    jwt_refresh_secret=$(openssl rand -base64 64 | tr -d "=+/" | cut -c1-64)
-    redis_password=$(openssl rand -base64 32 | tr -d "=+/" | cut -c1-25)
-    session_secret=$(openssl rand -base64 32 | tr -d "=+/" | cut -c1-32)
-    wazuh_password=$(openssl rand -base64 32 | tr -d "=+/" | cut -c1-25)
+    # Generate secure passwords (alphanumeric only to avoid sed escaping issues)
+    postgres_password=$(openssl rand -hex 16)
+    jwt_secret=$(openssl rand -hex 32)
+    jwt_refresh_secret=$(openssl rand -hex 32)
+    redis_password=$(openssl rand -hex 16)
+    session_secret=$(openssl rand -hex 16)
+    wazuh_password=$(openssl rand -hex 16)
 
-    # Update .env file
-    sed -i "s/POSTGRES_PASSWORD=.*/POSTGRES_PASSWORD=$postgres_password/" .env
-    sed -i "s|DATABASE_URL=.*|DATABASE_URL=postgresql://auron_user:$postgres_password@postgres:5432/auron_db|" .env
-    sed -i "s/JWT_SECRET=.*/JWT_SECRET=$jwt_secret/" .env
-    sed -i "s/JWT_REFRESH_SECRET=.*/JWT_REFRESH_SECRET=$jwt_refresh_secret/" .env
-    sed -i "s/REDIS_PASSWORD=.*/REDIS_PASSWORD=$redis_password/" .env
-    sed -i "s/SESSION_SECRET=.*/SESSION_SECRET=$session_secret/" .env
-    sed -i "s/WAZUH_DASHBOARD_PASSWORD=.*/WAZUH_DASHBOARD_PASSWORD=$wazuh_password/" .env
-    sed -i "s/WAZUH_API_PASSWORD=.*/WAZUH_API_PASSWORD=$wazuh_password/" .env
+    # Function to safely update .env file
+    update_env() {
+        local key=$1
+        local value=$2
+        # Escape special characters for sed
+        local escaped_value=$(printf '%s\n' "$value" | sed 's/[&/\]/\\&/g')
+        sed -i "s|^${key}=.*|${key}=${escaped_value}|" .env
+    }
+
+    # Update .env file with generated passwords
+    update_env "POSTGRES_PASSWORD" "$postgres_password"
+    update_env "DATABASE_URL" "postgresql://auron_user:${postgres_password}@postgres:5432/auron_db"
+    update_env "JWT_SECRET" "$jwt_secret"
+    update_env "JWT_REFRESH_SECRET" "$jwt_refresh_secret"
+    update_env "REDIS_PASSWORD" "$redis_password"
+    update_env "SESSION_SECRET" "$session_secret"
+    update_env "WAZUH_DASHBOARD_PASSWORD" "$wazuh_password"
+    update_env "WAZUH_API_PASSWORD" "$wazuh_password"
 
     # Update API URLs
-    sed -i "s|VITE_API_URL=.*|VITE_API_URL=http://$server_ip:4000/api|" .env
-    sed -i "s|VITE_WS_URL=.*|VITE_WS_URL=ws://$server_ip:4000|" .env
-    sed -i "s|CORS_ORIGIN=.*|CORS_ORIGIN=http://$server_ip:5173|" .env
+    update_env "VITE_API_URL" "http://${server_ip}:4000/api"
+    update_env "VITE_WS_URL" "ws://${server_ip}:4000"
+    update_env "CORS_ORIGIN" "http://${server_ip}:5173"
 
     # Set production mode
-    sed -i "s/NODE_ENV=.*/NODE_ENV=production/" .env
-    sed -i "s/LOG_LEVEL=.*/LOG_LEVEL=info/" .env
+    update_env "NODE_ENV" "production"
+    update_env "LOG_LEVEL" "info"
 
     print_success "Generated secure passwords and configured environment"
 
@@ -350,7 +362,7 @@ configure_environment() {
     # LiquidMetal API Key
     read -p "Enter LiquidMetal API key (for AI hints, press Enter to skip): " liquidmetal_key
     if [[ ! -z "$liquidmetal_key" ]]; then
-        sed -i "s/LIQUIDMETAL_API_KEY=.*/LIQUIDMETAL_API_KEY=$liquidmetal_key/" .env
+        update_env "LIQUIDMETAL_API_KEY" "$liquidmetal_key"
         print_success "LiquidMetal API key configured"
     else
         print_warning "Skipping LiquidMetal API key (AI hints will not work)"
@@ -359,9 +371,10 @@ configure_environment() {
     # Vultr API Key
     read -p "Enter Vultr API key (for cloud labs, press Enter to skip): " vultr_key
     if [[ ! -z "$vultr_key" ]]; then
-        sed -i "s/# VULTR_API_KEY=.*/VULTR_API_KEY=$vultr_key/" .env
-        sed -i "s/# VULTR_DEFAULT_REGION=.*/VULTR_DEFAULT_REGION=ewr/" .env
-        sed -i "s/# VULTR_DEFAULT_PLAN=.*/VULTR_DEFAULT_PLAN=vc2-1c-1gb/" .env
+        # Uncomment and set Vultr API key
+        sed -i "s/^# VULTR_API_KEY=.*/VULTR_API_KEY=$vultr_key/" .env
+        sed -i "s/^# VULTR_DEFAULT_REGION=.*/VULTR_DEFAULT_REGION=ewr/" .env
+        sed -i "s/^# VULTR_DEFAULT_PLAN=.*/VULTR_DEFAULT_PLAN=vc2-1c-1gb/" .env
         print_success "Vultr API key configured"
     else
         print_warning "Skipping Vultr API key (local Docker labs only)"
