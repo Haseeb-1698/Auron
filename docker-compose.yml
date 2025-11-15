@@ -13,17 +13,9 @@ services:
     depends_on:
       dvwa-db:
         condition: service_healthy
-      wazuh:
-        condition: service_healthy
     networks:
       - auron-network
     restart: unless-stopped
-    logging:
-      driver: syslog
-      options:
-        syslog-address: "udp://wazuh:514"
-        tag: "dvwa"
-        syslog-format: "rfc3164"
     healthcheck:
       test: ["CMD-SHELL", "curl -f http://localhost/ || exit 1"]
       interval: 30s
@@ -57,18 +49,9 @@ services:
     container_name: auron-juiceshop
     ports:
       - "127.0.0.1:3000:3000"
-    depends_on:
-      wazuh:
-        condition: service_healthy
     networks:
       - auron-network
     restart: unless-stopped
-    logging:
-      driver: syslog
-      options:
-        syslog-address: "udp://wazuh:514"
-        tag: "juiceshop"
-        syslog-format: "rfc3164"
     healthcheck:
       test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:3000 || exit 1"]
       interval: 30s
@@ -93,10 +76,17 @@ services:
       retries: 3
       start_period: 20s
 
+  # Wazuh SIEM Stack (OPTIONAL - requires SSL certificate configuration)
+  # Note: Wazuh services are disabled by default as they require additional setup.
+  # To enable: docker compose --profile wazuh up -d
+  # SSL certificates must be configured for Wazuh to work properly.
+  # See: https://documentation.wazuh.com/current/deployment-options/docker/wazuh-container.html
+
   # Wazuh Indexer (OpenSearch-based)
   wazuh-indexer:
     image: wazuh/wazuh-indexer:4.9.2
     container_name: auron-wazuh-indexer
+    profiles: ["wazuh"]
     ports:
       - "127.0.0.1:9200:9200"
     environment:
@@ -131,6 +121,7 @@ services:
   wazuh:
     image: wazuh/wazuh-manager:4.9.2
     container_name: auron-wazuh
+    profiles: ["wazuh"]
     ports:
       - "127.0.0.1:1514:1514"
       - "127.0.0.1:1515:1515"
@@ -164,6 +155,7 @@ services:
   wazuh-dashboard:
     image: wazuh/wazuh-dashboard:4.9.2
     container_name: auron-wazuh-dashboard
+    profiles: ["wazuh"]
     ports:
       - "127.0.0.1:5601:5601"
     environment:
@@ -192,18 +184,9 @@ services:
       - "127.0.0.1:2222:22"
       - "127.0.0.1:2121:21"
       - "127.0.0.1:3306:3306"
-    depends_on:
-      wazuh:
-        condition: service_healthy
     networks:
       - auron-network
     restart: unless-stopped
-    logging:
-      driver: syslog
-      options:
-        syslog-address: "udp://wazuh:514"
-        tag: "metasploitable"
-        syslog-format: "rfc3164"
     healthcheck:
       test: ["CMD-SHELL", "curl -f http://localhost/ || exit 1"]
       interval: 30s
@@ -226,17 +209,9 @@ services:
         condition: service_healthy
       metasploitable:
         condition: service_healthy
-      wazuh:
-        condition: service_healthy
     networks:
       - auron-network
     restart: unless-stopped
-    logging:
-      driver: syslog
-      options:
-        syslog-address: "udp://wazuh:514"
-        tag: "attack-scripts"
-        syslog-format: "rfc3164"
     tty: true
     stdin_open: true
 
