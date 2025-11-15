@@ -94,6 +94,36 @@ open https://localhost:5601 # Wazuh SIEM (admin/SecretPassword)
 
 **🎉 That's it! You're ready to start learning cybersecurity!**
 
+### ☁️ Vultr Cloud Deployment (10 Minutes)
+
+Want to deploy on Vultr cloud for remote access or workshops?
+
+```bash
+# 1. Create Vultr instance (via web dashboard)
+#    - Plan: vc2-8c-16gb (16GB RAM recommended)
+#    - OS: Ubuntu 22.04 LTS
+#    - Region: Choose nearest (e.g., ewr - New Jersey)
+
+# 2. SSH into server
+ssh root@YOUR_SERVER_IP
+
+# 3. Create non-root user
+adduser auron
+usermod -aG sudo auron
+
+# 4. Clone and run automated deployment
+su - auron
+git clone https://github.com/Haseeb-1698/Auron.git
+cd Auron
+bash scripts/vultr-deploy.sh
+
+# 5. Access via SSH tunnel (secure)
+ssh -L 5173:localhost:5173 -L 4000:localhost:4000 -L 5601:localhost:5601 auron@YOUR_SERVER_IP
+# Then open: http://localhost:5173
+```
+
+**📖 Detailed Vultr Guide:** See [VULTR_QUICKSTART.md](VULTR_QUICKSTART.md)
+
 ---
 
 ## 🔑 API Keys Configuration
@@ -239,6 +269,8 @@ WAZUH_DASHBOARD_PASSWORD=SecretPassword  # Change in production!
 | Guide | Lines | Description |
 |-------|-------|-------------|
 | [DEPLOYMENT_COMPLETE.md](DEPLOYMENT_COMPLETE.md) | 650+ | Step-by-step deployment, API keys, troubleshooting |
+| [VULTR_QUICKSTART.md](VULTR_QUICKSTART.md) | 400+ | ⚡ Quick Vultr cloud deployment (10 minutes) |
+| [VULTR_DEPLOYMENT.md](VULTR_DEPLOYMENT.md) | 850+ | Complete Vultr deployment guide with automation |
 | [LABS_WORKFLOW.md](LABS_WORKFLOW.md) | 800+ | How labs work from user perspective with diagrams |
 | [WIRING_STATUS.md](WIRING_STATUS.md) | 500+ | Frontend-backend wiring audit and action plan |
 | [CURRENT_STATUS.md](CURRENT_STATUS.md) | 900+ | Detailed implementation status and metrics |
@@ -247,7 +279,9 @@ WAZUH_DASHBOARD_PASSWORD=SecretPassword  # Change in production!
 
 ### 📖 Quick Links
 
-- **Deployment:** See [DEPLOYMENT_COMPLETE.md](DEPLOYMENT_COMPLETE.md)
+- **Local Deployment:** See [DEPLOYMENT_COMPLETE.md](DEPLOYMENT_COMPLETE.md)
+- **Vultr Cloud (Quick):** See [VULTR_QUICKSTART.md](VULTR_QUICKSTART.md) ⚡
+- **Vultr Cloud (Full):** See [VULTR_DEPLOYMENT.md](VULTR_DEPLOYMENT.md)
 - **How Labs Work:** See [LABS_WORKFLOW.md](LABS_WORKFLOW.md)
 - **Wiring Status:** See [WIRING_STATUS.md](WIRING_STATUS.md)
 - **Workshop Setup:** See [WORKSHOP_GUIDE.md](WORKSHOP_GUIDE.md)
@@ -674,6 +708,8 @@ If you find Auron useful, please consider giving it a star ⭐ on GitHub!
 | Resource | Description |
 |----------|-------------|
 | [🚀 Deployment Guide](DEPLOYMENT_COMPLETE.md) | Complete step-by-step deployment instructions |
+| [⚡ Vultr Quick Start](VULTR_QUICKSTART.md) | Deploy on Vultr cloud in 10 minutes |
+| [☁️ Vultr Full Guide](VULTR_DEPLOYMENT.md) | Complete Vultr deployment with automation |
 | [🎓 Labs Workflow](LABS_WORKFLOW.md) | How labs work from user perspective |
 | [🔌 Wiring Status](WIRING_STATUS.md) | Frontend-backend integration status |
 | [📊 Current Status](CURRENT_STATUS.md) | Detailed implementation metrics |
@@ -682,6 +718,6 @@ If you find Auron useful, please consider giving it a star ⭐ on GitHub!
 
 ---
 
-**Last Updated:** November 14, 2025
+**Last Updated:** November 15, 2025
 **Version:** 2.0
 **Status:** Production-Ready (96% Complete)
