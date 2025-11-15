@@ -13,17 +13,9 @@ services:
     depends_on:
       dvwa-db:
         condition: service_healthy
-      wazuh:
-        condition: service_healthy
     networks:
       - auron-network
     restart: unless-stopped
-    logging:
-      driver: syslog
-      options:
-        syslog-address: "udp://wazuh:514"
-        tag: "dvwa"
-        syslog-format: "rfc3164"
     healthcheck:
       test: ["CMD-SHELL", "curl -f http://localhost/ || exit 1"]
       interval: 30s
@@ -57,18 +49,9 @@ services:
     container_name: auron-juiceshop
     ports:
       - "127.0.0.1:3000:3000"
-    depends_on:
-      wazuh:
-        condition: service_healthy
     networks:
       - auron-network
     restart: unless-stopped
-    logging:
-      driver: syslog
-      options:
-        syslog-address: "udp://wazuh:514"
-        tag: "juiceshop"
-        syslog-format: "rfc3164"
     healthcheck:
       test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:3000 || exit 1"]
       interval: 30s
@@ -105,9 +88,7 @@ services:
       - cluster.name=wazuh-cluster
       - node.name=wazuh-indexer
       - bootstrap.memory_lock=true
-      - plugins.security.disabled=true
-      - DISABLE_INSTALL_DEMO_CONFIG=true
-      - OPENSEARCH_INITIAL_ADMIN_PASSWORD=SecretPassword123!
+      - "OPENSEARCH_PATH_CONF=/usr/share/wazuh-indexer/config"
     ulimits:
       memlock:
         soft: -1
@@ -117,11 +98,16 @@ services:
         hard: 65536
     volumes:
       - wazuh-indexer-data:/var/lib/wazuh-indexer
+      - ./wazuh-certs/indexer/indexer-key.pem:/usr/share/wazuh-indexer/config/certs/indexer-key.pem:ro
+      - ./wazuh-certs/indexer/indexer.pem:/usr/share/wazuh-indexer/config/certs/indexer.pem:ro
+      - ./wazuh-certs/indexer/root-ca.pem:/usr/share/wazuh-indexer/config/certs/root-ca.pem:ro
+      - ./wazuh-certs/admin.pem:/usr/share/wazuh-indexer/config/certs/admin.pem:ro
+      - ./wazuh-certs/admin-key.pem:/usr/share/wazuh-indexer/config/certs/admin-key.pem:ro
     networks:
       - auron-network
     restart: unless-stopped
     healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:9200 || exit 1"]
+      test: ["CMD-SHELL", "curl -fsSk https://localhost:9200 || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 5
@@ -137,16 +123,21 @@ services:
       - "127.0.0.1:514:514/udp"
       - "127.0.0.1:55000:55000"
     environment:
-      - INDEXER_URL=http://wazuh-indexer:9200
+      - INDEXER_URL=https://wazuh-indexer:9200
       - INDEXER_USERNAME=admin
       - INDEXER_PASSWORD=SecretPassword
-      - FILEBEAT_SSL_VERIFICATION_MODE=none
-      - DISABLE_SECURITY=true
+      - FILEBEAT_SSL_VERIFICATION_MODE=full
+      - FILEBEAT_SSL_CERTIFICATE=/etc/filebeat/certs/filebeat.pem
+      - FILEBEAT_SSL_KEY=/etc/filebeat/certs/filebeat-key.pem
+      - FILEBEAT_SSL_CERTIFICATE_AUTHORITIES=/etc/filebeat/certs/root-ca.pem
     volumes:
       - wazuh-data:/var/ossec/data
       - wazuh-logs:/var/ossec/logs
       - ./wazuh-config/local_rules.xml:/var/ossec/etc/rules/local_rules.xml:ro
       - ./wazuh-config/local_decoder.xml:/var/ossec/etc/decoders/local_decoder.xml:ro
+      - ./wazuh-certs/filebeat/filebeat-key.pem:/etc/filebeat/certs/filebeat-key.pem:ro
+      - ./wazuh-certs/filebeat/filebeat.pem:/etc/filebeat/certs/filebeat.pem:ro
+      - ./wazuh-certs/filebeat/root-ca.pem:/etc/filebeat/certs/root-ca.pem:ro
     depends_on:
       wazuh-indexer:
         condition: service_healthy
@@ -172,8 +163,14 @@ services:
       - WAZUH_API_URL=https://wazuh:55000
       - API_USERNAME=wazuh-wui
       - API_PASSWORD=MyS3cr37P450r.*-
-      - OPENSEARCH_HOSTS=http://wazuh-indexer:9200
-      - DISABLE_SECURITY_DASHBOARDS_PLUGIN=true
+      - OPENSEARCH_HOSTS=https://wazuh-indexer:9200
+      - SERVER_SSL_ENABLED=true
+      - SERVER_SSL_CERTIFICATE=/usr/share/wazuh-dashboard/certs/dashboard.pem
+      - SERVER_SSL_KEY=/usr/share/wazuh-dashboard/certs/dashboard-key.pem
+    volumes:
+      - ./wazuh-certs/dashboard/dashboard-key.pem:/usr/share/wazuh-dashboard/certs/dashboard-key.pem:ro
+      - ./wazuh-certs/dashboard/dashboard.pem:/usr/share/wazuh-dashboard/certs/dashboard.pem:ro
+      - ./wazuh-certs/dashboard/root-ca.pem:/usr/share/wazuh-dashboard/certs/root-ca.pem:ro
     depends_on:
       wazuh-indexer:
         condition: service_healthy
@@ -192,18 +189,9 @@ services:
       - "127.0.0.1:2222:22"
       - "127.0.0.1:2121:21"
       - "127.0.0.1:3306:3306"
-    depends_on:
-      wazuh:
-        condition: service_healthy
     networks:
       - auron-network
     restart: unless-stopped
-    logging:
-      driver: syslog
-      options:
-        syslog-address: "udp://wazuh:514"
-        tag: "metasploitable"
-        syslog-format: "rfc3164"
     healthcheck:
       test: ["CMD-SHELL", "curl -f http://localhost/ || exit 1"]
       interval: 30s
@@ -226,17 +214,9 @@ services:
         condition: service_healthy
       metasploitable:
         condition: service_healthy
-      wazuh:
-        condition: service_healthy
     networks:
       - auron-network
     restart: unless-stopped
-    logging:
-      driver: syslog
-      options:
-        syslog-address: "udp://wazuh:514"
-        tag: "attack-scripts"
-        syslog-format: "rfc3164"
     tty: true
     stdin_open: true
 

@@ -448,6 +448,15 @@ deploy_platform() {
         return
     fi
 
+    # Generate Wazuh SSL certificates
+    if [ ! -d "wazuh-certs" ]; then
+        print_warning "Generating Wazuh SSL certificates..."
+        bash scripts/generate-wazuh-certs.sh
+        print_success "SSL certificates generated"
+    else
+        print_success "SSL certificates already exist"
+    fi
+
     # Pull images
     print_warning "Pulling Docker images (this may take 5-10 minutes)..."
     docker compose pull

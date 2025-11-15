@@ -29,6 +29,10 @@ COPY backend/package*.json ./
 ENV PUPPETEER_SKIP_DOWNLOAD=true
 RUN npm install --omit=dev
 
+# Copy tsconfig files for path resolution at runtime
+COPY backend/tsconfig.json ./tsconfig.json
+COPY tsconfig.base.json /tsconfig.base.json
+
 # Copy built files from builder
 COPY --from=builder /app/dist ./dist
 
@@ -43,4 +47,4 @@ USER nodejs
 
 EXPOSE 4000
 
-CMD ["node", "dist/server.js"]
+CMD ["node", "-r", "tsconfig-paths/register", "dist/server.js"]
