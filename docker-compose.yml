@@ -275,7 +275,9 @@ services:
 
   # Backend API
   backend:
-    build: ./backend
+    build:
+      context: .
+      dockerfile: ./backend/Dockerfile
     container_name: auron-backend
     ports:
       - "127.0.0.1:4000:4000"
@@ -319,8 +321,8 @@ services:
   # Frontend Dashboard
   frontend:
     build:
-      context: ./frontend
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: ./frontend/Dockerfile
     container_name: auron-frontend
     ports:
       - "127.0.0.1:5173:80"
