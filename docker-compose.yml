@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   # DVWA - Damn Vulnerable Web Application
   dvwa:
@@ -97,7 +95,7 @@ services:
 
   # Wazuh Indexer (OpenSearch-based)
   wazuh-indexer:
-    image: wazuh/wazuh-indexer:latest
+    image: wazuh/wazuh-indexer:4.9.2
     container_name: auron-wazuh-indexer
     ports:
       - "127.0.0.1:9200:9200"
@@ -127,7 +125,7 @@ services:
 
   # Wazuh Manager
   wazuh:
-    image: wazuh/wazuh-manager:latest
+    image: wazuh/wazuh-manager:4.9.2
     container_name: auron-wazuh
     ports:
       - "127.0.0.1:1514:1514"
@@ -159,7 +157,7 @@ services:
 
   # Wazuh Dashboard
   wazuh-dashboard:
-    image: wazuh/wazuh-dashboard:latest
+    image: wazuh/wazuh-dashboard:4.9.2
     container_name: auron-wazuh-dashboard
     ports:
       - "127.0.0.1:5601:5601"
