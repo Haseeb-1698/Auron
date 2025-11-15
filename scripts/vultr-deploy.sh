@@ -164,12 +164,33 @@ install_docker() {
         print_success "User already in docker group"
     else
         sudo usermod -aG docker $USER
-        print_warning "Added user to docker group. You may need to log out and back in."
+        print_warning "Added user to docker group"
     fi
 
     # Enable and start Docker
     sudo systemctl enable docker
     sudo systemctl start docker
+
+    # Test Docker access
+    if ! docker ps &> /dev/null; then
+        print_warning "Docker group membership requires session refresh"
+        print_warning "Activating docker group with newgrp..."
+
+        # We need to tell the user to run newgrp or re-login
+        echo ""
+        print_error "Docker permission issue detected!"
+        echo ""
+        echo "Please run ONE of the following:"
+        echo ""
+        echo "  Option 1 (Quick): Run this command, then re-run the script:"
+        echo "    newgrp docker"
+        echo ""
+        echo "  Option 2 (Recommended): Log out and SSH back in, then re-run the script:"
+        echo "    exit"
+        echo "    ssh $USER@$(hostname -I | awk '{print $1}')"
+        echo ""
+        exit 1
+    fi
 
     # Verify Docker Compose
     if docker compose version &> /dev/null; then

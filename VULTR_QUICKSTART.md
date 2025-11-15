@@ -71,12 +71,27 @@ ssh auron@YOUR_SERVER_IP
 ```
 
 ### Step 4: Download and Run Automated Script
+
+**Option A: Using Wrapper Script (Recommended - Handles Docker Permissions)**
 ```bash
 # Clone repository
 git clone https://github.com/Haseeb-1698/Auron.git
 cd Auron
 
-# Run automated deployment script
+# Run wrapper script (handles docker group activation)
+bash scripts/vultr-deploy-wrapper.sh
+```
+
+**Option B: Manual Method**
+```bash
+# Clone repository
+git clone https://github.com/Haseeb-1698/Auron.git
+cd Auron
+
+# Activate docker group first
+newgrp docker
+
+# Run deployment script
 bash scripts/vultr-deploy.sh
 ```
 

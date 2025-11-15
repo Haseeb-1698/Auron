@@ -115,7 +115,7 @@ usermod -aG sudo auron
 su - auron
 git clone https://github.com/Haseeb-1698/Auron.git
 cd Auron
-bash scripts/vultr-deploy.sh
+bash scripts/vultr-deploy-wrapper.sh  # Handles docker permissions automatically
 
 # 5. Access via SSH tunnel (secure)
 ssh -L 5173:localhost:5173 -L 4000:localhost:4000 -L 5601:localhost:5601 auron@YOUR_SERVER_IP
