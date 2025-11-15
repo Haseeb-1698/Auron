@@ -103,11 +103,10 @@ services:
       - "OPENSEARCH_JAVA_OPTS=-Xms512m -Xmx512m"
       - discovery.type=single-node
       - cluster.name=wazuh-cluster
-      - node.name=wazuh-indexer
+      - node.name=node-1
       - bootstrap.memory_lock=true
-      - plugins.security.disabled=true
+      # Rely on opensearch.yml to disable security; remove admin password to avoid enabling security plugin
       - DISABLE_INSTALL_DEMO_CONFIG=true
-      - OPENSEARCH_INITIAL_ADMIN_PASSWORD=SecretPassword123!
     ulimits:
       memlock:
         soft: -1
@@ -117,6 +116,7 @@ services:
         hard: 65536
     volumes:
       - wazuh-indexer-data:/var/lib/wazuh-indexer
+      - ./wazuh-config/opensearch.yml:/usr/share/wazuh-indexer/opensearch.yml:ro
     networks:
       - auron-network
     restart: unless-stopped

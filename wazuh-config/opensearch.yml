@@ -1,0 +1,16 @@
+cluster.name: wazuh-cluster
+node.name: node-1
+discovery.type: single-node
+
+# Use data path under container's writable dir
+path.data: /var/lib/wazuh-indexer
+
+# Disable the OpenSearch security plugin to avoid SSL and cert requirements in lab setup
+plugins.security.disabled: true
+
+# Network settings
+network.host: 0.0.0.0
+http.port: 9200
+
+# Avoid loading demo config
+opensearch.security.disabled: true
