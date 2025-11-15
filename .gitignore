@@ -36,3 +36,6 @@ docker-compose.override.yml
 tmp/
 temp/
 *.tmp
+
+# Wazuh SSL Certificates (generated locally)
+wazuh-certs/
