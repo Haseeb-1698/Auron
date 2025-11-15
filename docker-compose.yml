@@ -88,7 +88,6 @@ services:
       - cluster.name=wazuh-cluster
       - node.name=wazuh-indexer
       - bootstrap.memory_lock=true
-      - "OPENSEARCH_PATH_CONF=/usr/share/wazuh-indexer/config"
     ulimits:
       memlock:
         soft: -1
@@ -98,11 +97,11 @@ services:
         hard: 65536
     volumes:
       - wazuh-indexer-data:/var/lib/wazuh-indexer
-      - ./wazuh-certs/indexer/indexer-key.pem:/usr/share/wazuh-indexer/config/certs/indexer-key.pem:ro
-      - ./wazuh-certs/indexer/indexer.pem:/usr/share/wazuh-indexer/config/certs/indexer.pem:ro
-      - ./wazuh-certs/indexer/root-ca.pem:/usr/share/wazuh-indexer/config/certs/root-ca.pem:ro
-      - ./wazuh-certs/admin.pem:/usr/share/wazuh-indexer/config/certs/admin.pem:ro
-      - ./wazuh-certs/admin-key.pem:/usr/share/wazuh-indexer/config/certs/admin-key.pem:ro
+      - ./wazuh-certs/indexer/indexer-key.pem:/etc/wazuh-indexer/certs/indexer-key.pem:ro
+      - ./wazuh-certs/indexer/indexer.pem:/etc/wazuh-indexer/certs/indexer.pem:ro
+      - ./wazuh-certs/indexer/root-ca.pem:/etc/wazuh-indexer/certs/root-ca.pem:ro
+      - ./wazuh-certs/admin.pem:/etc/wazuh-indexer/certs/admin.pem:ro
+      - ./wazuh-certs/admin-key.pem:/etc/wazuh-indexer/certs/admin-key.pem:ro
     networks:
       - auron-network
     restart: unless-stopped
@@ -165,12 +164,12 @@ services:
       - API_PASSWORD=MyS3cr37P450r.*-
       - OPENSEARCH_HOSTS=https://wazuh-indexer:9200
       - SERVER_SSL_ENABLED=true
-      - SERVER_SSL_CERTIFICATE=/usr/share/wazuh-dashboard/certs/dashboard.pem
-      - SERVER_SSL_KEY=/usr/share/wazuh-dashboard/certs/dashboard-key.pem
+      - SERVER_SSL_CERTIFICATE=/etc/wazuh-dashboard/certs/dashboard.pem
+      - SERVER_SSL_KEY=/etc/wazuh-dashboard/certs/dashboard-key.pem
     volumes:
-      - ./wazuh-certs/dashboard/dashboard-key.pem:/usr/share/wazuh-dashboard/certs/dashboard-key.pem:ro
-      - ./wazuh-certs/dashboard/dashboard.pem:/usr/share/wazuh-dashboard/certs/dashboard.pem:ro
-      - ./wazuh-certs/dashboard/root-ca.pem:/usr/share/wazuh-dashboard/certs/root-ca.pem:ro
+      - ./wazuh-certs/dashboard/dashboard-key.pem:/etc/wazuh-dashboard/certs/dashboard-key.pem:ro
+      - ./wazuh-certs/dashboard/dashboard.pem:/etc/wazuh-dashboard/certs/dashboard.pem:ro
+      - ./wazuh-certs/dashboard/root-ca.pem:/etc/wazuh-dashboard/certs/root-ca.pem:ro
     depends_on:
       wazuh-indexer:
         condition: service_healthy
