@@ -9,7 +9,8 @@ COPY tsconfig.base.json /tsconfig.base.json
 COPY backend/package*.json ./
 COPY backend/tsconfig.json ./
 
-# Install dependencies
+# Install dependencies (skip Puppeteer browser download to avoid network timeouts)
+ENV PUPPETEER_SKIP_DOWNLOAD=true
 RUN npm install
 
 # Copy source code
@@ -25,6 +26,7 @@ WORKDIR /app
 
 # Install production dependencies only
 COPY backend/package*.json ./
+ENV PUPPETEER_SKIP_DOWNLOAD=true
 RUN npm install --omit=dev
 
 # Copy built files from builder
