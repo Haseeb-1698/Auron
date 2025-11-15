@@ -105,6 +105,8 @@ services:
       - cluster.name=wazuh-cluster
       - node.name=wazuh-indexer
       - bootstrap.memory_lock=true
+      - plugins.security.disabled=true
+      - DISABLE_INSTALL_DEMO_CONFIG=true
     ulimits:
       memlock:
         soft: -1
@@ -133,10 +135,11 @@ services:
       - "127.0.0.1:514:514/udp"
       - "127.0.0.1:55000:55000"
     environment:
-      - INDEXER_URL=https://wazuh-indexer:9200
+      - INDEXER_URL=http://wazuh-indexer:9200
       - INDEXER_USERNAME=admin
       - INDEXER_PASSWORD=SecretPassword
       - FILEBEAT_SSL_VERIFICATION_MODE=none
+      - DISABLE_SECURITY=true
     volumes:
       - wazuh-data:/var/ossec/data
       - wazuh-logs:/var/ossec/logs
@@ -167,7 +170,8 @@ services:
       - WAZUH_API_URL=https://wazuh:55000
       - API_USERNAME=wazuh-wui
       - API_PASSWORD=MyS3cr37P450r.*-
-      - OPENSEARCH_HOSTS=https://wazuh-indexer:9200
+      - OPENSEARCH_HOSTS=http://wazuh-indexer:9200
+      - DISABLE_SECURITY_DASHBOARDS_PLUGIN=true
     depends_on:
       wazuh-indexer:
         condition: service_healthy
