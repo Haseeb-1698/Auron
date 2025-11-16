@@ -218,6 +218,10 @@ export class CloudLabService {
       throw new Error('Unauthorized to stop this lab instance');
     }
 
+    if (!instance.cloudInstanceId) {
+      throw new Error('Cloud instance ID not found - this is not a cloud lab instance');
+    }
+
     if (instance.status === LabInstanceStatus.STOPPED) {
       return instance;
     }
@@ -277,6 +281,10 @@ export class CloudLabService {
       throw new Error('Unauthorized to restart this lab instance');
     }
 
+    if (!instance.cloudInstanceId) {
+      throw new Error('Cloud instance ID not found - this is not a cloud lab instance');
+    }
+
     try {
       // Update status
       await instance.update({ status: LabInstanceStatus.STARTING });
@@ -324,6 +332,10 @@ export class CloudLabService {
       throw new Error('Unauthorized to reset this lab instance');
     }
 
+    if (!instance.cloudInstanceId) {
+      throw new Error('Cloud instance ID not found - this is not a cloud lab instance');
+    }
+
     try {
       // Delete old Vultr VM
       await VultrService.deleteInstance(instance.cloudInstanceId);
@@ -365,6 +377,10 @@ export class CloudLabService {
       throw new Error('Unauthorized to view this lab instance');
     }
 
+    if (!instance.cloudInstanceId) {
+      throw new Error('Cloud instance ID not found - this is not a cloud lab instance');
+    }
+
     // Update VM status from Vultr
     try {
       const vultrInstance = await VultrService.getInstance(instance.cloudInstanceId);
@@ -396,6 +412,11 @@ export class CloudLabService {
 
     for (const instance of expiredInstances) {
       try {
+        // Skip if no cloud instance ID (Docker lab)
+        if (!instance.cloudInstanceId) {
+          continue;
+        }
+
         // Delete Vultr VM
         await VultrService.deleteInstance(instance.cloudInstanceId);
 
