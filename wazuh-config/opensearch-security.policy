@@ -1,5 +1,5 @@
 // Custom security policy for Wazuh Indexer to allow certificate access
-// This grants read permissions to SSL certificate files
+// This grants specific permissions needed for SSL/TLS operation
 
 grant {
     // Allow reading SSL certificates from /etc/wazuh-indexer/certs/
@@ -10,6 +10,31 @@ grant {
     permission java.io.FilePermission "/usr/share/wazuh-indexer/config/*", "read";
     permission java.io.FilePermission "/usr/share/wazuh-indexer/config/-", "read";
 
-    // Allow all permissions (this is a training environment)
-    permission java.security.AllPermission;
+    // Allow reading and writing to data directory
+    permission java.io.FilePermission "/var/lib/wazuh-indexer/-", "read,write,delete";
+
+    // Allow reading and writing to log directory
+    permission java.io.FilePermission "/var/log/wazuh-indexer/-", "read,write,delete";
+
+    // Allow reading from temp directory
+    permission java.io.FilePermission "/tmp/-", "read,write,delete";
+    permission java.io.FilePermission "/dev/shm/-", "read,write,delete";
+
+    // Allow reading system properties
+    permission java.util.PropertyPermission "*", "read,write";
+
+    // Allow network operations
+    permission java.net.SocketPermission "*", "connect,accept,listen,resolve";
+
+    // Allow runtime permissions
+    permission java.lang.RuntimePermission "*";
+    permission java.lang.reflect.ReflectPermission "*";
+
+    // Allow security permissions for SSL/TLS
+    permission java.security.SecurityPermission "*";
+
+    // Allow management permissions
+    permission javax.management.MBeanServerPermission "*";
+    permission javax.management.MBeanPermission "*", "*";
+    permission javax.management.MBeanTrustPermission "*";
 };
