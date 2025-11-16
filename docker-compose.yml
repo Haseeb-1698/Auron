@@ -278,6 +278,9 @@ services:
       - backend-logs:/app/logs
       - backend-uploads:/app/uploads
       - backend-storage:/app/storage
+      - /var/run/docker.sock:/var/run/docker.sock
+    group_add:
+      - "999"
     networks:
       - auron-network
     restart: unless-stopped

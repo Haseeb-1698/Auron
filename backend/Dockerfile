@@ -24,6 +24,9 @@ FROM node:18-alpine
 
 WORKDIR /app
 
+# Install Docker CLI for local lab deployments
+RUN apk add --no-cache docker-cli
+
 # Install production dependencies only
 COPY backend/package*.json ./
 ENV PUPPETEER_SKIP_DOWNLOAD=true
