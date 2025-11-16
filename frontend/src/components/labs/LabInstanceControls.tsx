@@ -15,7 +15,6 @@ import {
   Paper,
   Alert,
   FormControl,
-  FormLabel,
   RadioGroup,
   FormControlLabel,
   Radio,

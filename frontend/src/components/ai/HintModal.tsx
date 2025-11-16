@@ -76,7 +76,7 @@ export const HintModal: React.FC<HintModalProps> = ({
       const assistantMessage: Message = {
         id: `hint-${Date.now()}`,
         role: 'assistant',
-        content: typeof currentHint === 'string' ? currentHint : currentHint.hint || currentHint.content || 'No hint available',
+        content: typeof currentHint === 'string' ? currentHint : currentHint.content || 'No hint available',
         timestamp: new Date(),
       };
       setMessages((prev) => [...prev, assistantMessage]);
@@ -105,9 +105,6 @@ export const HintModal: React.FC<HintModalProps> = ({
           labId,
           exerciseId,
           context: userInput || 'Need help with this exercise',
-          currentProgress: '',
-          previousHints: messages.filter(m => m.role === 'assistant').map(m => m.content),
-          userCode: '',
         })
       ).unwrap();
     } catch (err) {
