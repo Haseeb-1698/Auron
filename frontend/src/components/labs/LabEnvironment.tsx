@@ -29,7 +29,6 @@ import { useDispatch, useSelector } from 'react-redux';
 import { toast } from 'react-toastify';
 import { fetchLabDetail, submitExercise, resetLab } from '@features/labs/labsSlice';
 import { fetchUserProgress } from '@features/progress/progressSlice';
-import { getHint } from '@features/ai/aiSlice';
 import { LabInstanceControls } from './LabInstanceControls';
 import { HintModal } from '../ai/HintModal';
 import { ProgressStatus } from '../../types';
@@ -484,7 +483,7 @@ export const LabEnvironment: React.FC = () => {
           labId={labId}
           exerciseId={hintModal.exerciseId}
           hintCost={hintModal.hintCost}
-          userPoints={user?.points || 0}
+          userPoints={0}
         />
       )}
     </Box>
