@@ -30,7 +30,7 @@ ENV PUPPETEER_SKIP_DOWNLOAD=true
 RUN npm install --omit=dev
 
 # Copy tsconfig files for path resolution at runtime
-COPY backend/tsconfig.json ./tsconfig.json
+COPY backend/tsconfig.runtime.json ./tsconfig.json
 COPY tsconfig.base.json /tsconfig.base.json
 
 # Copy built files from builder
@@ -47,4 +47,6 @@ USER nodejs
 
 EXPOSE 4000
 
+# Use the runtime tsconfig for path resolution
+ENV NODE_PATH=/app/dist
 CMD ["node", "-r", "tsconfig-paths/register", "dist/server.js"]
