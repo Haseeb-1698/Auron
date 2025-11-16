@@ -19,6 +19,7 @@ const startLabSchema = {
   }),
   body: Joi.object({
     timeoutOverride: Joi.number().integer().min(60000).max(14400000).optional(),
+    deploymentMode: Joi.string().valid('docker', 'cloud').optional(),
   }),
 };
 
