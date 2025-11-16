@@ -18,6 +18,7 @@ import { connectRedis } from '@config/redis';
 import JobManager from '@/jobs';
 import { ReportService } from '@services/ReportService';
 import { swaggerSpec } from '@config/swagger';
+import DockerService from '@services/DockerService';
 
 // Load environment variables
 dotenv.config();
@@ -120,6 +121,10 @@ class App {
       // Connect to Redis
       await connectRedis();
       logger.info('Redis connected successfully');
+
+      // Initialize Docker service and network
+      await DockerService.initialize();
+      logger.info('Docker service initialized successfully');
 
       // Initialize report storage directory
       await ReportService.initialize();
