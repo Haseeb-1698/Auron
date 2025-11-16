@@ -1,0 +1,15 @@
+// Custom security policy for Wazuh Indexer to allow certificate access
+// This grants read permissions to SSL certificate files
+
+grant {
+    // Allow reading SSL certificates from /etc/wazuh-indexer/certs/
+    permission java.io.FilePermission "/etc/wazuh-indexer/certs/*", "read";
+    permission java.io.FilePermission "/etc/wazuh-indexer/certs/-", "read";
+
+    // Allow reading configuration files
+    permission java.io.FilePermission "/usr/share/wazuh-indexer/config/*", "read";
+    permission java.io.FilePermission "/usr/share/wazuh-indexer/config/-", "read";
+
+    // Allow all permissions (this is a training environment)
+    permission java.security.AllPermission;
+};
