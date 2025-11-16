@@ -264,6 +264,9 @@ services:
       - ZAP_API_KEY=auron-zap-api-key
       - RATE_LIMIT_WINDOW_MS=900000
       - RATE_LIMIT_MAX_REQUESTS=100
+      - VULTR_API_KEY=${VULTR_API_KEY}
+      - VULTR_DEFAULT_REGION=${VULTR_DEFAULT_REGION:-ewr}
+      - VULTR_DEFAULT_PLAN=${VULTR_DEFAULT_PLAN:-vc2-1c-1gb}
     depends_on:
       postgres:
         condition: service_healthy
