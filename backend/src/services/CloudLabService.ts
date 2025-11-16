@@ -244,8 +244,8 @@ export class CloudLabService {
       // Clear cache
       await this.clearInstanceCache(instanceId);
 
-      // Store in SmartMemory
-      await LiquidMetalService.storeInSmartMemory({
+      // Store in SmartMemory - non-blocking
+      LiquidMetalService.storeInSmartMemory({
         userId,
         labId: instance.labId,
         event: 'lab_stopped',
@@ -256,6 +256,8 @@ export class CloudLabService {
             : 0,
         },
         timestamp: new Date().toISOString(),
+      }).catch((err) => {
+        logger.warn('Failed to store lab stop in SmartMemory:', err);
       });
 
       logger.info(`Lab instance stopped and VM destroyed: ${instanceId}`);
