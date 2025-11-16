@@ -62,6 +62,8 @@ export interface Lab {
   prerequisites: string[];
   learningObjectives: string[];
   isActive: boolean;
+  userInstances?: LabInstance[];
+  isRunning?: boolean;
 }
 
 export enum LabCategory {

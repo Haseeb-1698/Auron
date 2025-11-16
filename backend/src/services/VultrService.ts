@@ -130,15 +130,27 @@ export class VultrService {
       logger.debug(`Vultr API payload:`, apiPayload);
 
       const response = await this.client.post('/instances', apiPayload);
-      const instance = response.data.instance as VultrInstance;
+      let instance = response.data.instance as VultrInstance;
 
       logger.info(`Vultr instance created: ${instance.id}`, {
         ip: instance.mainIp,
         label: instance.label,
       });
 
-      // Wait for instance to be active
+      // Wait for instance to be active and running
       await this.waitForInstanceReady(instance.id);
+
+      // Get updated instance info with actual IP
+      const updatedInstance: any = await this.getInstance(instance.id);
+
+      // Vultr API returns snake_case but we need camelCase - extract the IP
+      const vmIp = updatedInstance.main_ip || updatedInstance.mainIp || '';
+      logger.info(`✅ VM created successfully with IP: ${vmIp}`);
+      logger.info(`🔧 VM is booting and Docker container is starting. This may take 2-5 minutes.`);
+      logger.info(`📝 Users can access the VM via SSH or wait for the container to start.`);
+
+      // Return the original instance (has the correct format for database)
+      instance = updatedInstance;
 
       return instance;
     } catch (error) {
@@ -162,6 +174,27 @@ export class VultrService {
     } catch (error) {
       logger.error(`Failed to get Vultr instance ${instanceId}:`, error);
       throw error;
+    }
+  }
+
+  /**
+   * Get instance password (only available for first 24 hours after creation)
+   */
+  async getInstancePassword(instanceId: string): Promise<string | null> {
+    try {
+      const response = await this.client.get(`/instances/${instanceId}/user-data`);
+      // Try to get default password - Vultr sets a default root password
+      const userData = response.data;
+      if (userData && userData.default_password) {
+        return userData.default_password;
+      }
+
+      // If no password in user data, try getting from instance details
+      const instance = await this.getInstance(instanceId);
+      return (instance as any).default_password || null;
+    } catch (error) {
+      logger.warn(`Failed to get password for instance ${instanceId}:`, error);
+      return null;
     }
   }
 
@@ -244,25 +277,34 @@ export class VultrService {
   ): Promise<void> {
     const startTime = Date.now();
     const pollInterval = 5000; // 5 seconds
+    let lastLoggedStatus = '';
+
+    logger.info(`⏳ Waiting for Vultr VM ${instanceId} to become ready...`);
 
     while (Date.now() - startTime < maxWaitTime) {
       try {
         const instance = await this.getInstance(instanceId);
+        const currentStatus = `${instance.status}/${instance.serverState || 'none'}/${instance.powerStatus || 'none'}`;
 
-        if (
-          instance.status === 'active' &&
-          instance.serverState === 'ok' &&
-          instance.powerStatus === 'running'
-        ) {
-          logger.info(`Vultr instance ${instanceId} is ready`);
-          return;
+        // Log status changes and full instance object for debugging
+        if (currentStatus !== lastLoggedStatus) {
+          logger.info(`VM Status: ${instance.status}, Server: ${instance.serverState || 'undefined'}, Power: ${instance.powerStatus || 'undefined'}, IP: ${instance.mainIp || 'not-assigned'}`);
+          logger.info(`Full instance data: ${JSON.stringify(instance)}`);
+          lastLoggedStatus = currentStatus;
         }
 
-        logger.debug(`Waiting for instance ${instanceId}...`, {
-          status: instance.status,
-          serverState: instance.serverState,
-          powerStatus: instance.powerStatus,
-        });
+        // Check if instance is active - Vultr API returns status='active' when VM is ready
+        // Don't require mainIp as it might be assigned later
+        if (instance.status === 'active') {
+          logger.info(`✅ Vultr VM ${instanceId} is active (IP: ${instance.mainIp || 'being-assigned'})`);
+
+          // Wait additional time for VM to fully boot and Docker to start
+          logger.info(`⏳ Waiting 45 seconds for VM boot and Docker container to start...`);
+          await new Promise((resolve) => setTimeout(resolve, 45000));
+
+          logger.info(`✅ VM and container should be ready now`);
+          return;
+        }
 
         await new Promise((resolve) => setTimeout(resolve, pollInterval));
       } catch (error) {
@@ -281,8 +323,9 @@ export class VultrService {
     ports: Array<{ container: number }>;
     environment?: Record<string, string>;
   }): string {
+    // Map ports to bind on all interfaces (0.0.0.0) for public access
     const portMappings = containerConfig.ports
-      .map((p) => `-p ${p.container}:${p.container}`)
+      .map((p) => `-p 0.0.0.0:${p.container}:${p.container}`)
       .join(' ');
 
     const envVars = containerConfig.environment
@@ -291,17 +334,75 @@ export class VultrService {
           .join(' ')
       : '';
 
+    // Generate firewall rules for each port
+    const firewallRules = containerConfig.ports
+      .map((p) => `ufw allow ${p.container}/tcp`)
+      .join('\n');
+
     return `#!/bin/bash
+set -e  # Exit on error
+
 # Auron Lab Container Startup Script
+exec > >(tee -a /var/log/auron-lab-startup.log)
+exec 2>&1
+
+echo "========================================="
+echo "Auron Lab Startup Script"
+echo "Time: $(date)"
+echo "========================================="
+
+# Update system
+echo "Updating system packages..."
+apt-get update -y
+apt-get upgrade -y
+
+# Install Docker if not present
+if ! command -v docker &> /dev/null; then
+  echo "Installing Docker..."
+  apt-get install -y apt-transport-https ca-certificates curl software-properties-common
+  curl -fsSL https://download.docker.com/linux/ubuntu/gpg | apt-key add -
+  add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
+  apt-get update -y
+  apt-get install -y docker-ce docker-ce-cli containerd.io
+  systemctl enable docker
+  systemctl start docker
+  echo "Docker installed successfully"
+else
+  echo "Docker is already installed"
+fi
 
 # Wait for Docker to be ready
-while ! docker info > /dev/null 2>&1; do
-  echo "Waiting for Docker..."
+echo "Waiting for Docker daemon to be ready..."
+for i in {1..30}; do
+  if docker info > /dev/null 2>&1; then
+    echo "Docker is ready!"
+    break
+  fi
+  echo "Waiting for Docker... (attempt $i/30)"
   sleep 2
 done
 
+# Configure firewall (UFW)
+echo "Configuring firewall..."
+apt-get install -y ufw
+ufw --force enable
+ufw allow 22/tcp  # SSH
+${firewallRules}
+ufw reload
+echo "Firewall configured successfully"
+
 # Pull and run container
+echo "Pulling Docker image: ${containerConfig.image}"
 docker pull ${containerConfig.image}
+
+# Stop and remove existing container if it exists
+if docker ps -a --format '{{.Names}}' | grep -q '^auron-lab$'; then
+  echo "Removing existing container..."
+  docker stop auron-lab || true
+  docker rm auron-lab || true
+fi
+
+echo "Starting container..."
 docker run -d \\
   --name auron-lab \\
   --restart unless-stopped \\
@@ -309,9 +410,24 @@ docker run -d \\
   ${envVars} \\
   ${containerConfig.image}
 
+# Wait for container to be running
+sleep 5
+
 # Log status
-echo "Container started: ${containerConfig.image}"
-docker ps
+echo "========================================="
+echo "Container Status:"
+docker ps -a | grep auron-lab
+echo "========================================="
+echo "Listening Ports:"
+netstat -tlnp | grep -E ':(${containerConfig.ports.map(p => p.container).join('|')})' || echo "No ports listening yet"
+echo "========================================="
+echo "Container Logs:"
+docker logs auron-lab
+echo "========================================="
+echo "Startup complete!"
+echo "Container: ${containerConfig.image}"
+echo "Time: $(date)"
+echo "========================================="
 `;
   }
 

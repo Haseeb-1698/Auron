@@ -80,6 +80,13 @@ const labsSlice = createSlice({
       })
       .addCase(fetchLabDetail.fulfilled, (state, action) => {
         state.currentLab = action.payload;
+        // If lab has user instances, set the first running one as current instance
+        if (action.payload.userInstances && action.payload.userInstances.length > 0) {
+          const runningInstance = action.payload.userInstances.find(
+            (i: any) => i.status === 'running'
+          );
+          state.currentInstance = runningInstance || action.payload.userInstances[0];
+        }
       })
       .addCase(startLab.fulfilled, (state, action) => {
         state.currentInstance = action.payload;

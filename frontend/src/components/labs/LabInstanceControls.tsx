@@ -94,8 +94,16 @@ export const LabInstanceControls: React.FC<LabInstanceControlsProps> = ({
   const handleStartLab = async () => {
     setIsLoading(true);
     try {
-      await dispatch(startLab({ labId, deploymentMode })).unwrap();
+      const result = await dispatch(startLab({ labId, deploymentMode })).unwrap();
       setShowDeploymentDialog(false);
+
+      // Show success toast with deployment mode
+      const mode = deploymentMode === 'cloud' ? 'Cloud (Vultr)' : 'Local Docker';
+      const accessInfo = result.accessUrl ? `Access at: ${result.accessUrl}` : '';
+      console.log(`Lab started successfully on ${mode}! ${accessInfo}`);
+
+      // Refresh the page data to show the new instance
+      window.location.reload();
     } catch (error) {
       console.error('Failed to start lab:', error);
     } finally {
@@ -263,7 +271,11 @@ export const LabInstanceControls: React.FC<LabInstanceControlsProps> = ({
             disabled={isLoading}
             fullWidth
           >
-            {isLoading ? 'Starting...' : 'Start Lab'}
+            {isLoading
+              ? deploymentMode === 'cloud'
+                ? 'Creating cloud instance... (may take up to 2 min)'
+                : 'Starting...'
+              : 'Start Lab'}
           </Button>
         ) : (
           <>

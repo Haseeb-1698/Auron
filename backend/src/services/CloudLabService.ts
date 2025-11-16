@@ -139,11 +139,31 @@ export class CloudLabService {
         lab.containerConfig
       );
 
+      // Extract IP address (Vultr API returns main_ip not mainIp)
+      const vmIp = (vultrInstance as any).main_ip || vultrInstance.mainIp || '';
+      const vmInternalIp = (vultrInstance as any).internal_ip || vultrInstance.internalIp || '';
+      const vmPassword = (vultrInstance as any).default_password || '';
+
+      logger.info(`VM created with IP: ${vmIp}, Internal: ${vmInternalIp}`);
+
+      // Try to get root password from Vultr (available for 24 hours)
+      let sshPassword = vmPassword;
+      if (!sshPassword) {
+        try {
+          sshPassword = (await VultrService.getInstancePassword(vultrInstance.id)) || '';
+          if (sshPassword) {
+            logger.info(`Retrieved SSH password for instance ${vultrInstance.id}`);
+          }
+        } catch (err) {
+          logger.warn(`Could not retrieve SSH password: ${err}`);
+        }
+      }
+
       // Generate access URLs for each port
       const accessUrls: string[] = [];
-      if (lab.containerConfig.ports) {
+      if (lab.containerConfig.ports && vmIp) {
         for (const port of lab.containerConfig.ports) {
-          accessUrls.push(`http://${vultrInstance.mainIp}:${port.container}`);
+          accessUrls.push(`http://${vmIp}:${port.container}`);
         }
       }
 
@@ -152,8 +172,8 @@ export class CloudLabService {
         labId,
         userId,
         cloudInstanceId: vultrInstance.id,
-        publicIp: vultrInstance.mainIp,
-        internalIp: vultrInstance.internalIp,
+        publicIp: vmIp,
+        internalIp: vmInternalIp,
         cloudProvider: 'vultr',
         status: LabInstanceStatus.RUNNING,
         ports: lab.containerConfig.ports.map((p) => ({
@@ -167,6 +187,10 @@ export class CloudLabService {
           ram: vultrInstance.ram,
           vcpu: vultrInstance.vcpuCount,
           label: vultrInstance.label,
+          sshUser: 'root',
+          sshPassword: sshPassword,
+          sshCommand: `ssh root@${vmIp}`,
+          ports: lab.containerConfig.ports.map((p) => p.container),
         },
         startedAt: new Date(),
         expiresAt,

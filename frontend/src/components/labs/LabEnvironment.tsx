@@ -308,7 +308,7 @@ export const LabEnvironment: React.FC = () => {
             <TabPanel value={activeTab} index={1}>
               {lab.exercises && lab.exercises.length > 0 ? (
                 <Box>
-                  {lab.exercises
+                  {[...lab.exercises]
                     .sort((a, b) => a.order - b.order)
                     .map((exercise: Exercise) => (
                       <Accordion
