@@ -20,6 +20,7 @@ import ProgressPage from '@pages/ProgressPage';
 import ReportsPage from '@pages/ReportsPage';
 import CollaborationPage from '@pages/CollaborationPage';
 import ProfilePage from '@pages/ProfilePage';
+import SettingsPage from '@pages/SettingsPage';
 import NotFoundPage from '@pages/NotFoundPage';
 
 /**
@@ -71,6 +72,7 @@ function App(): JSX.Element {
           <Route path="progress" element={<ProgressPage />} />
           <Route path="reports" element={<ReportsPage />} />
           <Route path="collaboration" element={<CollaborationPage />} />
+          <Route path="settings" element={<SettingsPage />} />
           <Route path="profile" element={<ProfilePage />} />
         </Route>
 
