@@ -22,7 +22,6 @@ import {
   Cloud as CloudIcon,
   Security as SecurityIcon,
 } from '@mui/icons-material';
-import api from '@services/api';
 
 interface TabPanelProps {
   children?: React.ReactNode;
