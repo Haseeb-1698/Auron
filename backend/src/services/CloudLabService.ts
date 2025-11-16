@@ -179,8 +179,8 @@ export class CloudLabService {
       // Schedule auto-cleanup
       this.scheduleAutoCleanup(instance.id, timeoutDuration);
 
-      // Store in SmartMemory (AI tracking)
-      await LiquidMetalService.storeInSmartMemory({
+      // Store in SmartMemory (AI tracking) - non-blocking
+      LiquidMetalService.storeInSmartMemory({
         userId,
         labId,
         event: 'lab_started',
@@ -190,6 +190,8 @@ export class CloudLabService {
           region: vultrInstance.region,
         },
         timestamp: new Date().toISOString(),
+      }).catch((err) => {
+        logger.warn('Failed to store lab start in SmartMemory:', err);
       });
 
       logger.info(`Lab instance started on Vultr`, {
