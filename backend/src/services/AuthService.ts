@@ -2,6 +2,7 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import speakeasy from 'speakeasy';
 import qrcode from 'qrcode';
+import { Op } from 'sequelize';
 import { User } from '@models/User';
 import { logger } from '@utils/logger';
 
@@ -46,8 +47,8 @@ export class AuthService {
       // Check if user already exists
       const existingUser = await User.findOne({
         where: {
-          $or: [{ email: data.email }, { username: data.username }],
-        } as any,
+          [Op.or]: [{ email: data.email }, { username: data.username }],
+        },
       });
 
       if (existingUser) {

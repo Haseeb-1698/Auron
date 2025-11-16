@@ -12,12 +12,13 @@ import { logger } from '@utils/logger';
 
 export class LabController {
   /**
-   * Get the appropriate lab service based on LAB_MODE environment variable
+   * Get the appropriate lab service based on deployment mode
    * - 'cloud': Uses CloudLabService (Vultr VMs)
    * - 'docker': Uses LabService (local Docker containers)
    */
-  private getLabService() {
-    const labMode = process.env.LAB_MODE || 'docker';
+  private getLabService(deploymentMode?: 'cloud' | 'docker') {
+    // Use provided mode, fall back to env variable, default to docker
+    const labMode = deploymentMode || process.env.LAB_MODE || 'docker';
     return labMode === 'cloud' ? CloudLabService : LabService;
   }
   /**
@@ -93,8 +94,8 @@ export class LabController {
     try {
       const { id } = req.params;
       const userId = req.userId!;
-      const { timeoutOverride } = req.body;
-      const labService = this.getLabService();
+      const { timeoutOverride, deploymentMode } = req.body;
+      const labService = this.getLabService(deploymentMode);
 
       const instance = await labService.startLab({
         userId,

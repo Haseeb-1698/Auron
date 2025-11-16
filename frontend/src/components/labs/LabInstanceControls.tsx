@@ -14,6 +14,12 @@ import {
   Typography,
   Paper,
   Alert,
+  FormControl,
+  FormLabel,
+  RadioGroup,
+  FormControlLabel,
+  Radio,
+  Divider,
 } from '@mui/material';
 import {
   PlayArrow,
@@ -24,6 +30,8 @@ import {
   AccessTime,
   CheckCircle,
   Error as ErrorIcon,
+  Computer,
+  Cloud,
 } from '@mui/icons-material';
 import { useDispatch } from 'react-redux';
 import { startLab, stopLab } from '@features/labs/labsSlice';
@@ -81,16 +89,23 @@ export const LabInstanceControls: React.FC<LabInstanceControlsProps> = ({
   const dispatch = useDispatch<AppDispatch>();
   const [isLoading, setIsLoading] = useState(false);
   const [confirmDialog, setConfirmDialog] = useState<'stop' | 'reset' | 'delete' | null>(null);
+  const [deploymentMode, setDeploymentMode] = useState<'docker' | 'cloud'>('docker');
+  const [showDeploymentDialog, setShowDeploymentDialog] = useState(false);
 
   const handleStartLab = async () => {
     setIsLoading(true);
     try {
-      await dispatch(startLab(labId)).unwrap();
+      await dispatch(startLab({ labId, deploymentMode })).unwrap();
+      setShowDeploymentDialog(false);
     } catch (error) {
       console.error('Failed to start lab:', error);
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleOpenDeploymentDialog = () => {
+    setShowDeploymentDialog(true);
   };
 
   const handleStopLab = async () => {
@@ -245,7 +260,7 @@ export const LabInstanceControls: React.FC<LabInstanceControlsProps> = ({
             variant="contained"
             color="primary"
             startIcon={isLoading ? <CircularProgress size={16} /> : <PlayArrow />}
-            onClick={handleStartLab}
+            onClick={handleOpenDeploymentDialog}
             disabled={isLoading}
             fullWidth
           >
@@ -337,6 +352,133 @@ export const LabInstanceControls: React.FC<LabInstanceControlsProps> = ({
           <Button onClick={() => setConfirmDialog(null)}>Cancel</Button>
           <Button onClick={handleDeleteLab} color="error" variant="contained">
             Delete Instance
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Deployment Mode Selection Dialog */}
+      <Dialog
+        open={showDeploymentDialog}
+        onClose={() => setShowDeploymentDialog(false)}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <PlayArrow color="primary" />
+            Choose Deployment Mode
+          </Box>
+        </DialogTitle>
+        <DialogContent>
+          <DialogContentText sx={{ mb: 3 }}>
+            Select where you want to deploy this lab environment:
+          </DialogContentText>
+
+          <FormControl component="fieldset" fullWidth>
+            <RadioGroup
+              value={deploymentMode}
+              onChange={(e) => setDeploymentMode(e.target.value as 'docker' | 'cloud')}
+            >
+              {/* Local Docker Option */}
+              <Paper
+                elevation={deploymentMode === 'docker' ? 3 : 1}
+                sx={{
+                  p: 2,
+                  mb: 2,
+                  cursor: 'pointer',
+                  border: deploymentMode === 'docker' ? 2 : 1,
+                  borderColor: deploymentMode === 'docker' ? 'primary.main' : 'divider',
+                  transition: 'all 0.2s',
+                }}
+                onClick={() => setDeploymentMode('docker')}
+              >
+                <FormControlLabel
+                  value="docker"
+                  control={<Radio />}
+                  label={
+                    <Box>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
+                        <Computer color="primary" />
+                        <Typography variant="subtitle1" fontWeight="bold">
+                          Local Docker
+                        </Typography>
+                        <Chip label="Default" size="small" color="primary" variant="outlined" />
+                      </Box>
+                      <Typography variant="body2" color="text.secondary">
+                        Run the lab locally using Docker containers on this machine. Fast and no additional costs.
+                      </Typography>
+                      <Box sx={{ mt: 1, display: 'flex', gap: 1 }}>
+                        <Chip label="Free" size="small" color="success" />
+                        <Chip label="Fast startup" size="small" />
+                        <Chip label="Local resources" size="small" />
+                      </Box>
+                    </Box>
+                  }
+                  sx={{ alignItems: 'flex-start', m: 0 }}
+                />
+              </Paper>
+
+              {/* Cloud (Vultr) Option */}
+              <Paper
+                elevation={deploymentMode === 'cloud' ? 3 : 1}
+                sx={{
+                  p: 2,
+                  cursor: 'pointer',
+                  border: deploymentMode === 'cloud' ? 2 : 1,
+                  borderColor: deploymentMode === 'cloud' ? 'primary.main' : 'divider',
+                  transition: 'all 0.2s',
+                }}
+                onClick={() => setDeploymentMode('cloud')}
+              >
+                <FormControlLabel
+                  value="cloud"
+                  control={<Radio />}
+                  label={
+                    <Box>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
+                        <Cloud color="info" />
+                        <Typography variant="subtitle1" fontWeight="bold">
+                          Cloud (Vultr)
+                        </Typography>
+                        <Chip label="Advanced" size="small" color="info" variant="outlined" />
+                      </Box>
+                      <Typography variant="body2" color="text.secondary">
+                        Deploy to a cloud VM via Vultr. Dedicated resources and accessible from anywhere.
+                      </Typography>
+                      <Box sx={{ mt: 1, display: 'flex', gap: 1 }}>
+                        <Chip label="Pay per use" size="small" color="warning" />
+                        <Chip label="High performance" size="small" />
+                        <Chip label="Remote access" size="small" />
+                      </Box>
+                    </Box>
+                  }
+                  sx={{ alignItems: 'flex-start', m: 0 }}
+                />
+              </Paper>
+            </RadioGroup>
+          </FormControl>
+
+          <Divider sx={{ my: 2 }} />
+
+          {deploymentMode === 'cloud' && (
+            <Alert severity="info" sx={{ mt: 2 }}>
+              <Typography variant="caption">
+                <strong>Note:</strong> Cloud deployment requires a Vultr API key configured in your environment.
+                VMs will be billed according to Vultr pricing.
+              </Typography>
+            </Alert>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setShowDeploymentDialog(false)}>Cancel</Button>
+          <Button
+            onClick={handleStartLab}
+            variant="contained"
+            color="primary"
+            disabled={isLoading}
+            startIcon={isLoading ? <CircularProgress size={16} /> : <PlayArrow />}
+          >
+            {isLoading ? 'Starting...' : `Start Lab (${deploymentMode === 'docker' ? 'Local' : 'Cloud'})`}
           </Button>
         </DialogActions>
       </Dialog>

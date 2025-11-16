@@ -15,10 +15,6 @@ import {
   Divider,
   Alert,
   TextField,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
 } from '@mui/material';
 import {
   ExpandMore,
@@ -35,6 +31,7 @@ import { fetchLabDetail, submitExercise, resetLab } from '@features/labs/labsSli
 import { fetchUserProgress } from '@features/progress/progressSlice';
 import { getHint } from '@features/ai/aiSlice';
 import { LabInstanceControls } from './LabInstanceControls';
+import { HintModal } from '../ai/HintModal';
 import { ProgressStatus } from '../../types';
 import type { Lab, Exercise } from '../../types';
 import type { RootState, AppDispatch } from '../../store';
@@ -63,13 +60,20 @@ export const LabEnvironment: React.FC = () => {
   const { currentLab, currentInstance, isLoading } = useSelector((state: RootState) => state.labs);
   const { progress: userProgress } = useSelector((state: RootState) => state.progress);
   const { user } = useSelector((state: RootState) => state.auth);
-  const { currentHint, isLoading: aiLoading } = useSelector((state: RootState) => state.ai);
 
   const [activeTab, setActiveTab] = useState(0);
   const [expandedExercise, setExpandedExercise] = useState<string | false>(false);
   const [solutionText, setSolutionText] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState(false);
-  const [hintDialog, setHintDialog] = useState(false);
+  const [hintModal, setHintModal] = useState<{
+    open: boolean;
+    exerciseId: string;
+    hintCost: number;
+  }>({
+    open: false,
+    exerciseId: '',
+    hintCost: 10,
+  });
 
   useEffect(() => {
     if (labId) {
@@ -119,16 +123,20 @@ export const LabEnvironment: React.FC = () => {
     setExpandedExercise(isExpanded ? exerciseId : false);
   };
 
-  const handleRequestHint = async (exerciseId: string, context: string) => {
-    if (!labId) return;
+  const handleRequestHint = (exerciseId: string, hintCost: number = 10) => {
+    setHintModal({
+      open: true,
+      exerciseId,
+      hintCost,
+    });
+  };
 
-    try {
-      await dispatch(getHint({ labId, exerciseId, context })).unwrap();
-      setHintDialog(true);
-    } catch (error) {
-      toast.error('Failed to get hint. Please try again.');
-      console.error('Failed to get hint:', error);
-    }
+  const handleCloseHintModal = () => {
+    setHintModal({
+      open: false,
+      exerciseId: '',
+      hintCost: 10,
+    });
   };
 
   const handleSubmitSolution = async (exerciseId: string) => {
@@ -355,19 +363,18 @@ export const LabEnvironment: React.FC = () => {
                             <Box sx={{ mb: 2 }}>
                               <Typography variant="subtitle2" gutterBottom fontWeight="bold">
                                 <Lightbulb fontSize="small" sx={{ verticalAlign: 'middle', mr: 0.5 }} />
-                                Hints Available ({exercise.hints.length})
+                                AI Assistant Available
                               </Typography>
                               <Button
                                 variant="outlined"
                                 size="small"
                                 startIcon={<Lightbulb />}
-                                onClick={() => handleRequestHint(exercise.id, exercise.description)}
-                                disabled={aiLoading}
+                                onClick={() => handleRequestHint(exercise.id, exercise.points * 0.1)}
                               >
-                                {aiLoading ? 'Loading...' : 'Request Hint'}
+                                Get AI Hints
                               </Button>
                               <Typography variant="caption" color="text.secondary" sx={{ ml: 1 }}>
-                                Costs points
+                                Chat with AI assistant (costs {Math.ceil(exercise.points * 0.1)} pts/hint)
                               </Typography>
                             </Box>
                           )}
@@ -469,30 +476,17 @@ export const LabEnvironment: React.FC = () => {
         </Grid>
       </Grid>
 
-      {/* AI Hint Dialog */}
-      <Dialog open={hintDialog} onClose={() => setHintDialog(false)} maxWidth="sm" fullWidth>
-        <DialogTitle>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <Lightbulb color="primary" />
-            AI Hint
-          </Box>
-        </DialogTitle>
-        <DialogContent>
-          {currentHint && (
-            <Box>
-              <Alert severity="info" sx={{ mb: 2 }}>
-                <Typography variant="body2">
-                  <strong>Hint Cost:</strong> {currentHint.cost} points
-                </Typography>
-              </Alert>
-              <Typography variant="body1">{currentHint.content}</Typography>
-            </Box>
-          )}
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setHintDialog(false)}>Close</Button>
-        </DialogActions>
-      </Dialog>
+      {/* AI Hint Modal */}
+      {labId && (
+        <HintModal
+          open={hintModal.open}
+          onClose={handleCloseHintModal}
+          labId={labId}
+          exerciseId={hintModal.exerciseId}
+          hintCost={hintModal.hintCost}
+          userPoints={user?.points || 0}
+        />
+      )}
     </Box>
   );
 };

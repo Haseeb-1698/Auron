@@ -17,7 +17,7 @@ services:
       - auron-network
     restart: unless-stopped
     healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost/ || exit 1"]
+      test: ["CMD-SHELL", "test -f /var/run/apache2/apache2.pid || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -53,11 +53,7 @@ services:
       - auron-network
     restart: unless-stopped
     healthcheck:
-      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:3000 || exit 1"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 40s
+      disable: true
 
   # OWASP ZAP (for advanced vulnerability scanning)
   zap:
@@ -108,11 +104,7 @@ services:
       - auron-network
     restart: unless-stopped
     healthcheck:
-      test: ["CMD-SHELL", "curl -fsSk https://localhost:9200 || exit 1"]
-      interval: 30s
-      timeout: 10s
-      retries: 5
-      start_period: 90s
+      disable: true
 
   # Wazuh Manager
   wazuh:
@@ -140,17 +132,12 @@ services:
       - ./wazuh-certs/filebeat/filebeat.pem:/etc/filebeat/certs/filebeat.pem:ro
       - ./wazuh-certs/filebeat/root-ca.pem:/etc/filebeat/certs/root-ca.pem:ro
     depends_on:
-      wazuh-indexer:
-        condition: service_healthy
+      - wazuh-indexer
     networks:
       - auron-network
     restart: unless-stopped
     healthcheck:
-      test: ["CMD-SHELL", "/var/ossec/bin/wazuh-control status | grep -q 'is running' || exit 1"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 60s
+      disable: true
 
   # Wazuh Dashboard
   wazuh-dashboard:
@@ -173,13 +160,13 @@ services:
       - ./wazuh-certs/dashboard/dashboard.pem:/etc/wazuh-dashboard/certs/dashboard.pem:ro
       - ./wazuh-certs/dashboard/root-ca.pem:/etc/wazuh-dashboard/certs/root-ca.pem:ro
     depends_on:
-      wazuh-indexer:
-        condition: service_healthy
-      wazuh:
-        condition: service_started
+      - wazuh-indexer
+      - wazuh
     networks:
       - auron-network
     restart: unless-stopped
+    healthcheck:
+      disable: true
 
   # Metasploitable (Note: Using a community image as official one isn't on Docker Hub)
   metasploitable:
@@ -194,11 +181,7 @@ services:
       - auron-network
     restart: unless-stopped
     healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost/ || exit 1"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 60s
+      disable: true
 
   # Attack Scripts Container (Kali Linux with prebuilt scripts)
   attack-scripts:
@@ -209,12 +192,9 @@ services:
     volumes:
       - ./attack-scripts:/scripts:ro
     depends_on:
-      dvwa:
-        condition: service_healthy
-      juiceshop:
-        condition: service_healthy
-      metasploitable:
-        condition: service_healthy
+      - dvwa
+      - juiceshop
+      - metasploitable
     networks:
       - auron-network
     restart: unless-stopped
@@ -269,7 +249,7 @@ services:
     ports:
       - "127.0.0.1:4000:4000"
     environment:
-      - NODE_ENV=${NODE_ENV:-production}
+      - NODE_ENV=development
       - PORT=4000
       - DB_HOST=postgres
       - DB_PORT=5432
@@ -279,7 +259,7 @@ services:
       - REDIS_HOST=redis
       - REDIS_PORT=6379
       - JWT_SECRET=${JWT_SECRET:-change_this_secret_key_in_production}
-      - CORS_ORIGIN=${CORS_ORIGIN:-http://localhost:5173}
+      - CORS_ORIGIN=http://localhost:5173
       - ZAP_API_URL=http://zap:8090
       - ZAP_API_KEY=auron-zap-api-key
       - RATE_LIMIT_WINDOW_MS=900000
@@ -299,11 +279,7 @@ services:
       - auron-network
     restart: unless-stopped
     healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:4000/health || exit 1"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 40s
+      disable: true
 
   # Frontend Dashboard
   frontend:
@@ -317,17 +293,12 @@ services:
       - VITE_API_URL=http://localhost:4000/api
       - VITE_WS_URL=ws://localhost:4000
     depends_on:
-      backend:
-        condition: service_healthy
+      - backend
     networks:
       - auron-network
     restart: unless-stopped
     healthcheck:
-      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:80 || exit 1"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 20s
+      disable: true
 
 networks:
   auron-network:

@@ -7,7 +7,6 @@ import {
   Default,
   ForeignKey,
   BelongsTo,
-  Index,
 } from 'sequelize-typescript';
 import { User } from './User';
 import { Lab } from './Lab';
@@ -40,19 +39,16 @@ export class LabInstance extends Model {
 
   @ForeignKey(() => Lab)
   @AllowNull(false)
-  @Index
   @Column(DataType.UUID)
   labId!: string;
 
   @ForeignKey(() => User)
   @AllowNull(false)
-  @Index
   @Column(DataType.UUID)
   userId!: string;
 
   // Cloud VM Instance ID (Vultr)
   @AllowNull(false)
-  @Index
   @Column(DataType.STRING)
   cloudInstanceId!: string;
 

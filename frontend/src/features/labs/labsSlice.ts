@@ -28,9 +28,14 @@ export const fetchLabDetail = createAsyncThunk('labs/fetchLabDetail', async (lab
   return await api.get<Lab>(API_ENDPOINTS.LABS.DETAIL(labId));
 });
 
-export const startLab = createAsyncThunk('labs/startLab', async (labId: string) => {
-  return await api.post<LabInstance>(API_ENDPOINTS.LABS.START(labId));
-});
+export const startLab = createAsyncThunk(
+  'labs/startLab',
+  async ({ labId, deploymentMode }: { labId: string; deploymentMode?: 'docker' | 'cloud' }) => {
+    return await api.post<LabInstance>(API_ENDPOINTS.LABS.START(labId), {
+      deploymentMode: deploymentMode || 'docker',
+    });
+  }
+);
 
 export const stopLab = createAsyncThunk('labs/stopLab', async (instanceId: string) => {
   return await api.post<{ success: boolean }>(API_ENDPOINTS.LABS.STOP_INSTANCE(instanceId));

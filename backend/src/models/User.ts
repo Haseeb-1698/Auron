@@ -37,16 +37,16 @@ export class User extends Model {
   @Unique
   @AllowNull(false)
   @Column(DataType.STRING)
-  email!: string;
+  declare email: string;
 
   @Unique
   @AllowNull(false)
   @Column(DataType.STRING)
-  username!: string;
+  declare username: string;
 
   @AllowNull(false)
   @Column(DataType.STRING)
-  passwordHash!: string;
+  declare passwordHash: string;
 
   @Column(DataType.STRING)
   firstName?: string;
@@ -62,32 +62,32 @@ export class User extends Model {
 
   @Default(false)
   @Column(DataType.BOOLEAN)
-  isVerified!: boolean;
+  declare isVerified: boolean;
 
   @Default(UserRole.STUDENT)
   @Column(DataType.ENUM(...Object.values(UserRole)))
-  role!: UserRole;
+  declare role: UserRole;
 
   @Default(false)
   @Column(DataType.BOOLEAN)
-  twoFactorEnabled!: boolean;
+  declare twoFactorEnabled: boolean;
 
   @Column(DataType.STRING)
   twoFactorSecret?: string;
 
   @Default(true)
   @Column(DataType.BOOLEAN)
-  isActive!: boolean;
+  declare isActive: boolean;
 
   @Column(DataType.DATE)
   lastLoginAt?: Date;
 
   // Associations
   @HasMany(() => LabInstance)
-  labInstances!: LabInstance[];
+  declare labInstances: LabInstance[];
 
   @HasMany(() => UserProgress)
-  progress!: UserProgress[];
+  declare progress: UserProgress[];
 
   // Computed properties
   get fullName(): string {

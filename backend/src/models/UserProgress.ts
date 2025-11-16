@@ -7,7 +7,6 @@ import {
   Default,
   ForeignKey,
   BelongsTo,
-  Index,
 } from 'sequelize-typescript';
 import { User } from './User';
 import { Lab } from './Lab';
@@ -38,34 +37,32 @@ export class UserProgress extends Model {
 
   @ForeignKey(() => User)
   @AllowNull(false)
-  @Index
   @Column(DataType.UUID)
-  userId!: string;
+  declare userId: string;
 
   @ForeignKey(() => Lab)
   @AllowNull(false)
-  @Index
   @Column(DataType.UUID)
-  labId!: string;
+  declare labId: string;
 
   @Column(DataType.STRING)
   exerciseId?: string;
 
   @Default(ProgressStatus.NOT_STARTED)
   @Column(DataType.ENUM(...Object.values(ProgressStatus)))
-  status!: ProgressStatus;
+  declare status: ProgressStatus;
 
   @Default(0)
   @Column(DataType.INTEGER)
-  score!: number;
+  declare score: number;
 
   @Default(0)
   @Column(DataType.INTEGER)
-  pointsEarned!: number;
+  declare pointsEarned: number;
 
   @Default([])
   @Column(DataType.JSONB)
-  completedExercises!: string[];
+  declare completedExercises: string[];
 
   @Column(DataType.DATE)
   startedAt?: Date;
@@ -75,22 +72,22 @@ export class UserProgress extends Model {
 
   @Default(0)
   @Column(DataType.INTEGER)
-  timeSpent!: number; // in seconds
+  declare timeSpent: number; // in seconds
 
   @Default(0)
   @Column(DataType.INTEGER)
-  hintsUsed!: number;
+  declare hintsUsed: number;
 
   @Default(0)
   @Column(DataType.INTEGER)
-  attempts!: number;
+  declare attempts: number;
 
   @Column(DataType.DATE)
   lastActivityAt?: Date;
 
   @Default([])
   @Column(DataType.JSONB)
-  unlockedHints!: string[];
+  declare unlockedHints: string[];
 
   @Default({})
   @Column(DataType.JSONB)
@@ -98,10 +95,10 @@ export class UserProgress extends Model {
 
   // Associations
   @BelongsTo(() => User)
-  user!: User;
+  declare user: User;
 
   @BelongsTo(() => Lab)
-  lab!: Lab;
+  declare lab: Lab;
 }
 
 export default UserProgress;

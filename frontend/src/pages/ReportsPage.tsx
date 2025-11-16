@@ -301,7 +301,7 @@ export default function ReportsPage(): JSX.Element {
                     <CircularProgress />
                   </TableCell>
                 </TableRow>
-              ) : reports.length === 0 ? (
+              ) : !reports || reports.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={7} align="center">
                     <Typography color="text.secondary">No reports found</Typography>
@@ -377,7 +377,7 @@ export default function ReportsPage(): JSX.Element {
         </TableContainer>
 
         {/* Pagination */}
-        {pagination.totalPages > 1 && (
+        {pagination && pagination.totalPages > 1 && (
           <Box sx={{ display: 'flex', justifyContent: 'center', mt: 3 }}>
             <Pagination
               count={pagination.totalPages}

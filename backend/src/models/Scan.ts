@@ -7,7 +7,6 @@ import {
   BelongsTo,
   Default,
   AllowNull,
-  Index,
 } from 'sequelize-typescript';
 import { User } from './User';
 import { Lab } from './Lab';
@@ -74,19 +73,16 @@ export class Scan extends Model {
 
   @ForeignKey(() => User)
   @AllowNull(false)
-  @Index
   @Column(DataType.UUID)
   userId!: string;
 
   @ForeignKey(() => Lab)
   @AllowNull(false)
-  @Index
   @Column(DataType.UUID)
   labId!: string;
 
   @ForeignKey(() => LabInstance)
   @AllowNull(true)
-  @Index
   @Column(DataType.UUID)
   instanceId?: string;
 

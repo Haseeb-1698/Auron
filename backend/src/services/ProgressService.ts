@@ -108,7 +108,7 @@ export class ProgressService {
         updateData.flaggedVulnerabilities = data.flaggedVulnerabilities;
       }
 
-      updateData.lastAccessedAt = new Date();
+      updateData.lastActivityAt = new Date();
       updateData.attempts = progress.attempts + 1;
 
       await progress.update(updateData);
@@ -197,7 +197,7 @@ export class ProgressService {
       return await UserProgress.findAll({
         where: { userId },
         include: [{ model: Lab, as: 'lab' }],
-        order: [['lastAccessedAt', 'DESC']],
+        order: [['lastActivityAt', 'DESC']],
       });
     } catch (error) {
       logger.error('Get user progress error:', error);
