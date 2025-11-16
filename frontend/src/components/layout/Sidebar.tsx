@@ -4,6 +4,7 @@ import ScienceIcon from '@mui/icons-material/Science';
 import AssessmentIcon from '@mui/icons-material/Assessment';
 import DescriptionIcon from '@mui/icons-material/Description';
 import PeopleIcon from '@mui/icons-material/People';
+import SettingsIcon from '@mui/icons-material/Settings';
 import { useNavigate, useLocation } from 'react-router-dom';
 
 interface SidebarProps {
@@ -18,6 +19,7 @@ const menuItems = [
   { text: 'Progress', icon: <AssessmentIcon />, path: '/progress' },
   { text: 'Reports', icon: <DescriptionIcon />, path: '/reports' },
   { text: 'Collaboration', icon: <PeopleIcon />, path: '/collaboration' },
+  { text: 'Settings', icon: <SettingsIcon />, path: '/settings' },
 ];
 
 export default function Sidebar({ drawerWidth, mobileOpen, handleDrawerToggle }: SidebarProps): JSX.Element {
