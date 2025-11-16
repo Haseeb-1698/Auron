@@ -7,6 +7,7 @@ import { createServer, Server as HTTPServer } from 'http';
 import { Server as SocketIOServer } from 'socket.io';
 import dotenv from 'dotenv';
 import swaggerUi from 'swagger-ui-express';
+import path from 'path';
 
 import { errorHandler } from '@middleware/errorHandler';
 import { logger } from '@utils/logger';
@@ -72,6 +73,9 @@ class App {
     // Body parsing
     this.app.use(express.json({ limit: '10mb' }));
     this.app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+    // Static file serving for lab images and assets
+    this.app.use('/assets', express.static(path.join(__dirname, '../public/assets')));
 
     // Logging
     if (NODE_ENV === 'development') {
