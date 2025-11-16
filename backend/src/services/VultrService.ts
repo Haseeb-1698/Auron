@@ -116,7 +116,20 @@ export class VultrService {
 
       logger.info(`Creating Vultr instance for lab ${labName}`, { userId, labId });
 
-      const response = await this.client.post('/instances', config);
+      // Transform camelCase to snake_case for Vultr API
+      const apiPayload = {
+        region: config.region,
+        plan: config.plan,
+        os_id: config.osId,
+        label: config.label,
+        hostname: config.hostname,
+        user_data: config.userdata,
+        tags: config.tags,
+      };
+
+      logger.debug(`Vultr API payload:`, apiPayload);
+
+      const response = await this.client.post('/instances', apiPayload);
       const instance = response.data.instance as VultrInstance;
 
       logger.info(`Vultr instance created: ${instance.id}`, {
