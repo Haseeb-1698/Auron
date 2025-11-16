@@ -173,8 +173,10 @@ export class CloudLabService {
         autoCleanup: true,
       });
 
-      // Cache instance info
-      await this.cacheInstanceInfo(instance.id, instance);
+      // Cache instance info - non-blocking
+      this.cacheInstanceInfo(instance.id, instance).catch((err) => {
+        logger.warn('Failed to cache instance info:', err);
+      });
 
       // Schedule auto-cleanup
       this.scheduleAutoCleanup(instance.id, timeoutDuration);
