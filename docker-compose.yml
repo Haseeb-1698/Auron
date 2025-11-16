@@ -97,6 +97,7 @@ services:
         hard: 65536
     volumes:
       - wazuh-indexer-data:/var/lib/wazuh-indexer
+      - ./wazuh-config/opensearch.yml:/usr/share/wazuh-indexer/config/opensearch.yml:ro
       - ./wazuh-certs/indexer/indexer-key.pem:/etc/wazuh-indexer/certs/indexer-key.pem:ro
       - ./wazuh-certs/indexer/indexer.pem:/etc/wazuh-indexer/certs/indexer.pem:ro
       - ./wazuh-certs/indexer/root-ca.pem:/etc/wazuh-indexer/certs/root-ca.pem:ro
