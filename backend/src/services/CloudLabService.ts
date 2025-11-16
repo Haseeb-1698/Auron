@@ -94,6 +94,9 @@ export class CloudLabService {
       throw new Error('Lab not found');
     }
 
+    // Debug log
+    logger.info(`[Cloud] Lab ${lab.name} isActive value: ${lab.isActive} (type: ${typeof lab.isActive})`);
+
     if (!lab.isActive) {
       throw new Error('Lab is not active');
     }
