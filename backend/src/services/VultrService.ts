@@ -69,6 +69,9 @@ export class VultrService {
 
     if (!this.API_KEY) {
       logger.warn('VULTR_API_KEY not set. Vultr service will not function.');
+    } else {
+      logger.info(`VultrService initialized with API key: ${this.API_KEY.substring(0, 8)}...${this.API_KEY.substring(this.API_KEY.length - 4)}`);
+      logger.info(`Using region: ${this.DEFAULT_REGION}, plan: ${this.DEFAULT_PLAN}`);
     }
 
     this.client = axios.create({
