@@ -40,83 +40,82 @@ export class LabInstance extends Model {
   @ForeignKey(() => Lab)
   @AllowNull(false)
   @Column(DataType.UUID)
-  labId!: string;
+  declare labId: string;
 
   @ForeignKey(() => User)
   @AllowNull(false)
   @Column(DataType.UUID)
-  userId!: string;
+  declare userId: string;
 
-  // Cloud VM Instance ID (Vultr)
-  @AllowNull(false)
+  // Cloud VM Instance ID (Vultr) - optional for local Docker labs
   @Column(DataType.STRING)
-  cloudInstanceId!: string;
+  declare cloudInstanceId?: string;
 
   // Public IP address of the VM
   @Column(DataType.STRING)
-  publicIp?: string;
+  declare publicIp?: string;
 
   // Internal/Private IP
   @Column(DataType.STRING)
-  internalIp?: string;
+  declare internalIp?: string;
 
   // Cloud provider (vultr, aws, gcp, etc.)
   @Default('vultr')
   @Column(DataType.STRING)
-  cloudProvider!: string;
+  declare cloudProvider: string;
 
   // Docker container ID on the VM
   @Column(DataType.STRING)
-  containerId?: string;
+  declare containerId?: string;
 
   @Column(DataType.STRING)
-  containerName?: string;
+  declare containerName?: string;
 
   @Default(LabInstanceStatus.STARTING)
   @Column(DataType.ENUM(...Object.values(LabInstanceStatus)))
-  status!: LabInstanceStatus;
+  declare status: LabInstanceStatus;
 
   @Column(DataType.STRING)
-  accessUrl?: string;
+  declare accessUrl?: string;
 
   @Default([])
   @Column(DataType.JSONB)
-  ports!: Array<{ container: number; host: number }>;
+  declare ports: Array<{ container: number; host: number }>;
 
   // Cloud instance info (region, plan, etc.)
   @Column(DataType.JSONB)
-  cloudInstanceInfo?: Record<string, unknown>;
+  declare cloudInstanceInfo?: Record<string, unknown>;
 
   @Column(DataType.JSONB)
-  containerInfo?: Record<string, unknown>;
+  declare containerInfo?: Record<string, unknown>;
 
   @Column(DataType.DATE)
-  startedAt?: Date;
+  declare startedAt?: Date;
 
   @Column(DataType.DATE)
-  stoppedAt?: Date;
+  declare stoppedAt?: Date;
 
   @AllowNull(false)
   @Column(DataType.DATE)
-  expiresAt!: Date;
+  declare expiresAt: Date;
 
   @Column(DataType.TEXT)
-  errorMessage?: string;
+  declare errorMessage?: string;
 
   @Default(0)
   @Column(DataType.INTEGER)
-  restartCount!: number;
+  declare restartCount: number;
 
   @Default(false)
   @Column(DataType.BOOLEAN)
-  autoCleanup!: boolean;
+  declare autoCleanup: boolean;
 
   // Associations
   @BelongsTo(() => Lab)
-  lab!: Lab;
+  declare lab: Lab;
 
   @BelongsTo(() => User)
-  user!: User;
+  declare user: User;
 
   // Instance methods
   isExpired(): boolean {
