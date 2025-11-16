@@ -8,7 +8,7 @@ const router = Router();
  * Get all collaboration sessions for the authenticated user
  * TODO: Implement full collaboration functionality
  */
-router.get('/sessions', authenticate, (req, res) => {
+router.get('/sessions', authenticate, (_req, res) => {
   // Stub implementation - return empty array for now
   res.json({
     success: true,
@@ -22,7 +22,7 @@ router.get('/sessions', authenticate, (req, res) => {
  * Create a new collaboration session
  * TODO: Implement full collaboration functionality
  */
-router.post('/create', authenticate, (req, res) => {
+router.post('/create', authenticate, (_req, res) => {
   // Stub implementation
   res.status(501).json({
     success: false,
@@ -35,7 +35,7 @@ router.post('/create', authenticate, (req, res) => {
  * Join an existing collaboration session
  * TODO: Implement full collaboration functionality
  */
-router.post('/:sessionId/join', authenticate, (req, res) => {
+router.post('/:sessionId/join', authenticate, (_req, res) => {
   // Stub implementation
   res.status(501).json({
     success: false,
@@ -48,7 +48,7 @@ router.post('/:sessionId/join', authenticate, (req, res) => {
  * Leave a collaboration session
  * TODO: Implement full collaboration functionality
  */
-router.post('/:sessionId/leave', authenticate, (req, res) => {
+router.post('/:sessionId/leave', authenticate, (_req, res) => {
   // Stub implementation
   res.status(501).json({
     success: false,
