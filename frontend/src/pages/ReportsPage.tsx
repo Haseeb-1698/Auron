@@ -100,7 +100,7 @@ export default function ReportsPage(): JSX.Element {
       title: '',
       description: '',
     });
-    dispatch(fetchReports({ page: pagination.page, limit: pagination.limit }));
+    dispatch(fetchReports({ page: pagination?.page || 1, limit: pagination?.limit || 20 }));
   };
 
   const handleDownload = async (reportId: string, fileName: string) => {
@@ -124,14 +124,14 @@ export default function ReportsPage(): JSX.Element {
   const handleDelete = async (reportId: string) => {
     if (window.confirm('Are you sure you want to delete this report?')) {
       await dispatch(deleteReport(reportId));
-      dispatch(fetchReports({ page: pagination.page, limit: pagination.limit }));
+      dispatch(fetchReports({ page: pagination?.page || 1, limit: pagination?.limit || 20 }));
     }
   };
 
   const handleFilterChange = () => {
     const params: Record<string, string | number> = {
       page: 1,
-      limit: pagination.limit,
+      limit: pagination?.limit || 20,
     };
     if (filterType !== 'all') params.reportType = filterType;
     if (filterStatus !== 'all') params.status = filterStatus;
@@ -165,7 +165,7 @@ export default function ReportsPage(): JSX.Element {
   const handlePageChange = (_event: React.ChangeEvent<unknown>, page: number) => {
     const params: Record<string, string | number> = {
       page,
-      limit: pagination.limit,
+      limit: pagination?.limit || 20,
     };
     if (filterType !== 'all') params.reportType = filterType;
     if (filterStatus !== 'all') params.status = filterStatus;
