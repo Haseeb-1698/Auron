@@ -55,42 +55,42 @@ export class Lab extends Model {
 
   @AllowNull(false)
   @Column(DataType.STRING)
-  name!: string;
+  declare name: string;
 
   @AllowNull(false)
   @Column(DataType.TEXT)
-  description!: string;
+  declare description: string;
 
   @AllowNull(false)
   @Column(DataType.ENUM(...Object.values(LabCategory)))
-  category!: LabCategory;
+  declare category: LabCategory;
 
   @AllowNull(false)
   @Column(DataType.ENUM(...Object.values(LabDifficulty)))
-  difficulty!: LabDifficulty;
+  declare difficulty: LabDifficulty;
 
   @AllowNull(false)
   @Column(DataType.INTEGER)
-  estimatedTime!: number; // in minutes
+  declare estimatedTime: number; // in minutes
 
   @Default(100)
   @Column(DataType.INTEGER)
-  points!: number;
+  declare points: number;
 
   @Default([])
   @Column(DataType.ARRAY(DataType.STRING))
-  tags!: string[];
+  declare tags: string[];
 
   @Column(DataType.STRING)
-  imageUrl?: string;
+  declare imageUrl?: string;
 
   @AllowNull(false)
   @Column(DataType.JSONB)
-  containerConfig!: ContainerConfig;
+  declare containerConfig: ContainerConfig;
 
   @Default([])
   @Column(DataType.JSONB)
-  exercises!: Array<{
+  declare exercises: Array<{
     id: string;
     title: string;
     description: string;
@@ -102,27 +102,27 @@ export class Lab extends Model {
 
   @Default([])
   @Column(DataType.ARRAY(DataType.STRING))
-  prerequisites!: string[];
+  declare prerequisites: string[];
 
   @Default([])
   @Column(DataType.ARRAY(DataType.STRING))
-  learningObjectives!: string[];
+  declare learningObjectives: string[];
 
   @Default(true)
   @Column(DataType.BOOLEAN)
-  isActive!: boolean;
+  declare isActive: boolean;
 
   @Default(3600000) // 1 hour in milliseconds
   @Column(DataType.INTEGER)
-  timeoutDuration!: number;
+  declare timeoutDuration: number;
 
   @Default(5)
   @Column(DataType.INTEGER)
-  maxInstancesPerUser!: number;
+  declare maxInstancesPerUser: number;
 
   // Associations
   @HasMany(() => LabInstance)
-  instances!: LabInstance[];
+  declare instances: LabInstance[];
 }
 
 export default Lab;
