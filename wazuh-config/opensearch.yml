@@ -22,11 +22,11 @@ plugins.security.ssl.http.pemtrustedcas_filepath: /etc/wazuh-indexer/certs/root-
 
 plugins.security.allow_default_init_securityindex: true
 plugins.security.authcz.admin_dn:
-  - "CN=admin, OU=Training, O=Auron, L=San Francisco, ST=California, C=US"
+  - "CN=admin,OU=Training,O=Auron,L=San Francisco,ST=California,C=US"
 
 plugins.security.nodes_dn:
-  - "CN=wazuh-indexer, OU=Training, O=Auron, L=San Francisco, ST=California, C=US"
-  - "CN=node-1, OU=Training, O=Auron, L=San Francisco, ST=California, C=US"
+  - "CN=wazuh-indexer,OU=Training,O=Auron,L=San Francisco,ST=California,C=US"
+  - "CN=node-1,OU=Training,O=Auron,L=San Francisco,ST=California,C=US"
 
 plugins.security.audit.type: internal_opensearch
 plugins.security.enable_snapshot_restore_privilege: true
