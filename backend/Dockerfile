@@ -36,6 +36,9 @@ COPY tsconfig.base.json /tsconfig.base.json
 # Copy built files from builder
 COPY --from=builder /app/dist ./dist
 
+# Create storage directories
+RUN mkdir -p /app/storage/reports /app/storage/uploads /app/storage/logs /app/storage/temp
+
 # Create non-root user
 RUN addgroup -g 1001 -S nodejs && \
     adduser -S nodejs -u 1001
