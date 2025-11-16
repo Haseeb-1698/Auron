@@ -1,6 +1,13 @@
 import { Sequelize } from 'sequelize-typescript';
-import path from 'path';
 import { logger } from '@utils/logger';
+import { User } from '@models/User';
+import { Lab } from '@models/Lab';
+import { LabInstance } from '@models/LabInstance';
+import { UserProgress } from '@models/UserProgress';
+import { UserBadge } from '@models/UserBadge';
+import { Badge } from '@models/Badge';
+import { Scan } from '@models/Scan';
+import { Report } from '@models/Report';
 
 /**
  * Database Configuration
@@ -25,7 +32,7 @@ export const sequelize = new Sequelize({
   database: DB_NAME,
   username: DB_USER,
   password: DB_PASSWORD,
-  models: [path.join(__dirname, '../models')],
+  models: [User, Lab, LabInstance, UserProgress, UserBadge, Badge, Scan, Report],
   logging: NODE_ENV === 'development' ? (msg) => logger.debug(msg) : false,
   pool: {
     min: parseInt(DB_POOL_MIN, 10),
