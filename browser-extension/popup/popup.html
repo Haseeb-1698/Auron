@@ -9,8 +9,13 @@
 <body>
   <div class="container">
     <header>
-      <h1>🛡️ Auron Security</h1>
-      <p class="subtitle">Real-time Security Analysis</p>
+      <div style="display: flex; justify-content: space-between; align-items: center;">
+        <div>
+          <h1>🛡️ Auron Security</h1>
+          <p class="subtitle">Real-time Security Analysis</p>
+        </div>
+        <a href="../settings/settings.html" target="_blank" style="color: white; text-decoration: none; font-size: 24px;" title="Settings">⚙️</a>
+      </div>
     </header>
 
     <div id="status" class="status">
@@ -69,6 +74,8 @@
     </footer>
   </div>
 
+  <script src="../js/owasp-mapper.js"></script>
+  <script src="../js/openphish-service.js"></script>
   <script src="popup.js"></script>
 </body>
 </html>
