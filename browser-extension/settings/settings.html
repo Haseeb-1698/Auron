@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Auron Security - Settings</title>
+  <link rel="stylesheet" href="settings.css">
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>⚙️ Settings</h1>
+      <p class="subtitle">Configure Auron Security Analyzer</p>
+    </header>
+
+    <div class="settings-section">
+      <h2>API Configuration</h2>
+      <div class="form-group">
+        <label for="apiUrl">Backend API URL</label>
+        <input type="text" id="apiUrl" placeholder="http://localhost:4000" value="http://localhost:4000">
+        <small>URL of your Auron backend server</small>
+      </div>
+
+      <div class="form-group">
+        <label for="authToken">Authentication Token</label>
+        <input type="password" id="authToken" placeholder="Enter your JWT token">
+        <small>JWT token from your Auron account</small>
+      </div>
+
+      <div class="form-group">
+        <label for="openphishKey">OpenPhish API Key (Optional)</label>
+        <input type="password" id="openphishKey" placeholder="Enter OpenPhish API key">
+        <small>For enhanced phishing detection. Get one at <a href="https://openphish.com" target="_blank">openphish.com</a></small>
+      </div>
+    </div>
+
+    <div class="settings-section">
+      <h2>Analysis Options</h2>
+
+      <div class="form-group">
+        <label class="checkbox-label">
+          <input type="checkbox" id="enableBackendSync">
+          <span>Sync findings to backend</span>
+        </label>
+        <small>Automatically send security findings to your Auron account</small>
+      </div>
+
+      <div class="form-group">
+        <label class="checkbox-label">
+          <input type="checkbox" id="enableNotifications">
+          <span>Enable notifications</span>
+        </label>
+        <small>Show browser notifications for critical security issues</small>
+      </div>
+
+      <div class="form-group">
+        <label class="checkbox-label">
+          <input type="checkbox" id="enableAutoScan">
+          <span>Auto-scan on page load</span>
+        </label>
+        <small>Automatically analyze pages as you browse</small>
+      </div>
+
+      <div class="form-group">
+        <label class="checkbox-label">
+          <input type="checkbox" id="enableAIExplanations">
+          <span>AI-powered explanations</span>
+        </label>
+        <small>Use AI to provide detailed security guidance (requires backend connection)</small>
+      </div>
+    </div>
+
+    <div class="settings-section">
+      <h2>OWASP Integration</h2>
+
+      <div class="form-group">
+        <label class="checkbox-label">
+          <input type="checkbox" id="showOwaspMapping">
+          <span>Show OWASP Top 10 categories</span>
+        </label>
+        <small>Map findings to OWASP Top 10 vulnerabilities</small>
+      </div>
+
+      <div class="form-group">
+        <label class="checkbox-label">
+          <input type="checkbox" id="showRemediationGuidance">
+          <span>Show remediation guidance</span>
+        </label>
+        <small>Display fix suggestions for identified issues</small>
+      </div>
+    </div>
+
+    <div class="settings-section">
+      <h2>Account Status</h2>
+      <div id="connectionStatus" class="status-box">
+        <span class="status-indicator"></span>
+        <span id="statusText">Not connected</span>
+      </div>
+      <button id="testConnectionBtn" class="btn btn-secondary">Test Connection</button>
+    </div>
+
+    <div class="actions">
+      <button id="saveBtn" class="btn btn-primary">Save Settings</button>
+      <button id="clearDataBtn" class="btn btn-danger">Clear All Data</button>
+    </div>
+
+    <div id="message" class="message"></div>
+
+    <footer>
+      <p>Auron Cybersecurity Training Platform v1.0.0</p>
+      <p><a href="../popup/popup.html">Back to Analyzer</a></p>
+    </footer>
+  </div>
+
+  <script src="settings.js"></script>
+</body>
+</html>
