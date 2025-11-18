@@ -310,4 +310,93 @@ export class ReportController {
       });
     }
   }
+
+  /**
+   * Save browser extension security finding
+   * POST /api/reports/extension-finding
+   */
+  static async saveExtensionFinding(req: AuthRequest, res: Response): Promise<void> {
+    try {
+      const userId = req.user!.userId;
+
+      if (!userId) {
+        res.status(401).json({ success: false, message: 'Unauthorized' });
+        return;
+      }
+
+      const { url, finding_type, details, risk_level } = req.body;
+
+      // Save to database using raw query for now until we create the model
+      const { db } = await import('@config/database');
+
+      const [result] = await db.query(
+        `INSERT INTO extension_findings (id, user_id, url, finding_type, details, risk_level, created_at)
+         VALUES (gen_random_uuid(), :userId, :url, :findingType, :details, :riskLevel, NOW())
+         RETURNING *`,
+        {
+          replacements: {
+            userId,
+            url,
+            findingType: finding_type,
+            details: JSON.stringify(details),
+            riskLevel: risk_level,
+          },
+          type: db.QueryTypes.SELECT,
+        }
+      );
+
+      logger.info(`Extension finding saved for user ${userId}: ${finding_type} on ${url}`);
+
+      res.status(201).json({
+        success: true,
+        message: 'Finding saved successfully',
+        data: result,
+      });
+    } catch (error) {
+      logger.error('Failed to save extension finding:', error);
+      res.status(500).json({
+        success: false,
+        message: error instanceof Error ? error.message : 'Failed to save finding',
+      });
+    }
+  }
+
+  /**
+   * Get user's browser extension findings
+   * GET /api/reports/extension-findings
+   */
+  static async getExtensionFindings(req: AuthRequest, res: Response): Promise<void> {
+    try {
+      const userId = req.user!.userId;
+
+      if (!userId) {
+        res.status(401).json({ success: false, message: 'Unauthorized' });
+        return;
+      }
+
+      const { db } = await import('@config/database');
+
+      const findings = await db.query(
+        `SELECT * FROM extension_findings
+         WHERE user_id = :userId
+         ORDER BY created_at DESC
+         LIMIT 100`,
+        {
+          replacements: { userId },
+          type: db.QueryTypes.SELECT,
+        }
+      );
+
+      res.json({
+        success: true,
+        data: findings,
+      });
+    } catch (error) {
+      logger.error('Failed to get extension findings:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to retrieve extension findings',
+      });
+    }
+  }
 }

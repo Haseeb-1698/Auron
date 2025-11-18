@@ -43,6 +43,17 @@ const getUserReportsSchema = {
   }),
 };
 
+const extensionFindingSchema = {
+  body: Joi.object({
+    url: Joi.string().uri().required(),
+    finding_type: Joi.string()
+      .valid('cookie', 'session', 'csp', 'phishing', 'dom-analysis')
+      .required(),
+    details: Joi.object().required(),
+    risk_level: Joi.string().valid('low', 'medium', 'high', 'critical').required(),
+  }),
+};
+
 /**
  * Routes
  */
@@ -64,5 +75,11 @@ router.get('/:id/download', validate(getReportByIdSchema), ReportController.down
 
 // Delete report
 router.delete('/:id', validate(getReportByIdSchema), ReportController.deleteReport);
+
+// Browser extension - save security finding
+router.post('/extension-finding', validate(extensionFindingSchema), ReportController.saveExtensionFinding);
+
+// Browser extension - get user's extension findings
+router.get('/extension-findings', ReportController.getExtensionFindings);
 
 export default router;
