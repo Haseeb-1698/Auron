@@ -1,3 +1,4 @@
+import { QueryTypes } from 'sequelize';
 import { Response } from 'express';
 import { AuthRequest } from '@middleware/auth';
 import { logger } from '@utils/logger';
@@ -62,7 +63,7 @@ export class SettingsController {
         `SELECT * FROM user_settings WHERE user_id = :userId`,
         {
           replacements: { userId },
-          type: db.QueryTypes.SELECT,
+          type: QueryTypes.SELECT,
         }
       );
 
@@ -290,7 +291,7 @@ export class SettingsController {
          WHERE user_id = :userId`,
         {
           replacements: { userId },
-          type: db.QueryTypes.SELECT,
+          type: QueryTypes.SELECT,
         }
       );
 

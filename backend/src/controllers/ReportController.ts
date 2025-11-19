@@ -1,3 +1,4 @@
+import { QueryTypes } from 'sequelize';
 import { Response } from 'express';
 import { AuthRequest } from '@middleware/auth';
 import { ReportService } from '@services/ReportService';
@@ -341,7 +342,7 @@ export class ReportController {
             details: JSON.stringify(details),
             riskLevel: risk_level,
           },
-          type: db.QueryTypes.SELECT,
+          type: QueryTypes.SELECT,
         }
       );
 
@@ -383,7 +384,7 @@ export class ReportController {
          LIMIT 100`,
         {
           replacements: { userId },
-          type: db.QueryTypes.SELECT,
+          type: QueryTypes.SELECT,
         }
       );
 

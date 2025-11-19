@@ -28,14 +28,14 @@ const {
 } = process.env;
 
 export const sequelize = new Sequelize({
-  dialect: 'postgres',
+  dialect: 'postgres' as const,
   host: DB_HOST,
   port: parseInt(DB_PORT, 10),
   database: DB_NAME,
   username: DB_USER,
   password: DB_PASSWORD,
   models: [User, Lab, LabInstance, UserProgress, UserBadge, Badge, Scan, Report, CollaborationSession, CollaborationParticipant],
-  logging: NODE_ENV === 'development' ? (msg) => logger.debug(msg) : false,
+  logging: NODE_ENV === 'development' ? (msg: string) => logger.debug(msg) : false,
   pool: {
     min: parseInt(DB_POOL_MIN, 10),
     max: parseInt(DB_POOL_MAX, 10),
@@ -46,7 +46,7 @@ export const sequelize = new Sequelize({
     timestamps: true,
     underscored: true,
   },
-});
+} as any);
 
 /**
  * Connect to database
@@ -80,3 +80,4 @@ export async function closeDatabaseConnection(): Promise<void> {
 }
 
 export default sequelize;
+export const db = sequelize;

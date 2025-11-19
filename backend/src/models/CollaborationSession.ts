@@ -1,5 +1,5 @@
 import { Model, DataTypes, Optional } from 'sequelize';
-import { db } from '../database';
+import { sequelize } from '../config/database';
 import { User } from './User';
 import { Lab } from './Lab';
 
@@ -129,7 +129,7 @@ CollaborationSession.init(
     },
   },
   {
-    sequelize: db,
+    sequelize: sequelize,
     tableName: 'collaboration_sessions',
     timestamps: true,
     underscored: true,
