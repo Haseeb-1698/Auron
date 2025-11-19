@@ -25,7 +25,7 @@ import {
   PlayArrow,
   Assessment,
   Speed,
-  FireIcon,
+  
   LocalFireDepartment,
   Explore,
   Settings,

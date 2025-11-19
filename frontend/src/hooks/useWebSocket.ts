@@ -39,7 +39,7 @@ export const useWebSocketListener = (
 ): void => {
   useEffect(() => {
     const socket = getSocket();
-    if (!socket) return;
+    if (!socket) return () => {};
 
     const messageHandler = (message: WebSocketMessage): void => {
       if (message.type === messageType) {

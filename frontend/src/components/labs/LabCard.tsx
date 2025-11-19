@@ -98,20 +98,22 @@ export const LabCard: React.FC<LabCardProps> = ({
             : `0 12px 40px ${alpha(difficultyColor, 0.3)}, 0 0 20px ${alpha(difficultyColor, 0.2)}`,
           border: `2px solid ${isLocked ? alpha(difficultyColor, 0.3) : difficultyColor}`,
         },
-        '&::before': !isLocked && {
-          content: '""',
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          right: 0,
-          height: '4px',
-          background: `linear-gradient(90deg, ${difficultyColor}, ${alpha(difficultyColor, 0.5)})`,
-          opacity: 0,
-          transition: 'opacity 0.3s ease',
-        },
-        '&:hover::before': !isLocked && {
-          opacity: 1,
-        },
+        ...(!isLocked && {
+          '&::before': {
+            content: '""',
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            height: '4px',
+            background: `linear-gradient(90deg, ${difficultyColor}, ${alpha(difficultyColor, 0.5)})`,
+            opacity: 0,
+            transition: 'opacity 0.3s ease',
+          },
+          '&:hover::before': {
+            opacity: 1,
+          },
+        }),
       }}
       onClick={handleStartLab}
     >

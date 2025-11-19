@@ -97,8 +97,9 @@ export default function RegisterPage(): JSX.Element {
   }, [isAuthenticated, navigate]);
 
   const onSubmit = async (data: RegisterFormData): Promise<void> => {
-    const { confirmPassword, ...registerData } = data;
-    await dispatch(registerUser(registerData));
+    const { confirmPassword, ...rest } = data;
+    const registerData = { email: rest.email, username: rest.username, password: rest.password };
+    await dispatch(registerUser(registerData as any));
   };
 
   const getPasswordStrengthColor = () => {
