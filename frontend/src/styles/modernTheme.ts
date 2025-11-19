@@ -126,14 +126,6 @@ const lightThemeOptions: ThemeOptions = {
       'Arial',
       'sans-serif',
     ].join(','),
-    fontFamilyMonospace: [
-      '"Fira Code"',
-      '"JetBrains Mono"',
-      'Monaco',
-      'Consolas',
-      '"Courier New"',
-      'monospace',
-    ].join(','),
     h1: {
       fontSize: '3rem',
       fontWeight: 800,

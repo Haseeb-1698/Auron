@@ -44,6 +44,9 @@ export class User extends Model {
   @Column(DataType.STRING)
   declare username: string;
 
+  @Column(DataType.STRING)
+  displayName?: string;
+
   @AllowNull(false)
   @Column(DataType.STRING)
   declare passwordHash: string;

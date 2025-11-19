@@ -17,7 +17,7 @@ export class CollaborationController {
    */
   static async getSessions(req: Request, res: Response): Promise<void> {
     try {
-      const userId = req.user?.id;
+      const userId = req.user?.userId;
 
       if (!userId) {
         res.status(401).json({
@@ -131,7 +131,7 @@ export class CollaborationController {
   static async getSession(req: Request, res: Response): Promise<void> {
     try {
       const { sessionId } = req.params;
-      const userId = req.user?.id;
+      const userId = req.user?.userId;
 
       const session = await CollaborationSession.findByPk(sessionId, {
         include: [
@@ -204,7 +204,7 @@ export class CollaborationController {
    */
   static async createSession(req: Request, res: Response): Promise<void> {
     try {
-      const userId = req.user?.id;
+      const userId = req.user?.userId;
       const { name, labId, maxParticipants } = req.body;
 
       if (!userId) {
@@ -298,7 +298,7 @@ export class CollaborationController {
   static async joinSession(req: Request, res: Response): Promise<void> {
     try {
       const { sessionId } = req.params;
-      const userId = req.user?.id;
+      const userId = req.user?.userId;
 
       if (!userId) {
         res.status(401).json({
@@ -424,7 +424,7 @@ export class CollaborationController {
   static async leaveSession(req: Request, res: Response): Promise<void> {
     try {
       const { sessionId } = req.params;
-      const userId = req.user?.id;
+      const userId = req.user?.userId;
 
       if (!userId) {
         res.status(401).json({
@@ -524,7 +524,7 @@ export class CollaborationController {
   static async endSession(req: Request, res: Response): Promise<void> {
     try {
       const { sessionId } = req.params;
-      const userId = req.user?.id;
+      const userId = req.user?.userId;
 
       if (!userId) {
         res.status(401).json({
